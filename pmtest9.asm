@@ -54,14 +54,14 @@ ALIGN	32
 LABEL_DATA:
 ; 实模式下使用这些符号
 ; 字符串
-_szPMMessage:			db	"In Protect Mode now. ^-^", 0Ah, 0Ah, 0	; 进入保护模式后显示此字符串
-_szMemChkTitle:			db	"BaseAddrL BaseAddrH LengthLow LengthHigh   Type", 0Ah, 0	; 进入保护模式后显示此字符串
-_szRAMSize			db	"RAM size:", 0
-_szReturn			db	0Ah, 0
+_szPMMessage:			db	"In Protect Mode now. ^-^", 0Ah, 0Ah, 0	; 进入保护模式后显示此字符串,0A代表换行,0代表字符串结尾'\0',这些参数在DispStr中会得到处理
+_szMemChkTitle:			db	"BaseAddrL BaseAddrH LengthLow LengthHigh   Type", 0Ah, 0	; 进入保护模式后显示此字符串,0A代表换行,0代表字符串结尾'\0'
+_szRAMSize			db	"RAM size:", 0		;在DispMemSize(显示内存信息)中被使用,0代表字符串结尾'\0'
+_szReturn			db	0Ah, 0	;相当于一个换行符，在DispReturn中被使用
 ; 变量
 _wSPValueInRealMode		dw	0
 _dwMCRNumber:			dd	0	; Memory Check Result
-_dwDispPos:			dd	(80 * 6 + 0) * 2	; 屏幕第 6 行, 第 0 列。用于
+_dwDispPos:			dd	(80 * 6 + 0) * 2	; 屏幕第 6 行, 第 0 列。用于显示下一个内容在屏幕上将要输出的位置
 _dwMemSize:			dd	0
 _ARDStruct:			; Address Range Descriptor Structure
 	_dwBaseAddrLow:		dd	0
@@ -70,9 +70,9 @@ _ARDStruct:			; Address Range Descriptor Structure
 	_dwLengthHigh:		dd	0
 	_dwType:		dd	0
 _PageTableNumber:		dd	0
-_SavedIDTR:			dd	0	; 用于保存 IDTR
+_SavedIDTR:			dd	0	;用于保存 IDTR
 				dd	0
-_SavedIMREG:			db	0	; 中断屏蔽寄存器值
+_SavedIMREG:			db	0	;用于保存中断屏蔽寄存器值
 _MemChkBuf:	times	256	db	0
 
 ; 保护模式下使用这些符号
@@ -80,7 +80,7 @@ szPMMessage		equ	_szPMMessage	- $$
 szMemChkTitle		equ	_szMemChkTitle	- $$
 szRAMSize		equ	_szRAMSize	- $$
 szReturn		equ	_szReturn	- $$
-dwDispPos		equ	_dwDispPos	- $$	
+dwDispPos		equ	_dwDispPos	- $$	;_dwDispPos变量相对于本节开始处的偏移
 dwMemSize		equ	_dwMemSize	- $$
 dwMCRNumber		equ	_dwMCRNumber	- $$
 ARDStruct		equ	_ARDStruct	- $$
@@ -103,19 +103,19 @@ DataLen			equ	$ - LABEL_DATA
 ALIGN	32
 [BITS	32]
 LABEL_IDT:
-; 门                                目标选择子,            偏移, DCount, 属性
+; 中断门                 目标段选择子,       偏移, 			DCount, 属性
 %rep 32
-			Gate	SelectorCode32, SpuriousHandler,      0, DA_386IGate
+				Gate	SelectorCode32, SpuriousHandler,      0, DA_386IGate	;0-1Fh号中断都由32位代码段401行的_SpuriousHandler函数处理
 %endrep
-.020h:			Gate	SelectorCode32,    ClockHandler,      0, DA_386IGate
+.020h:			Gate	SelectorCode32,    ClockHandler,      0, DA_386IGate	;20h号中断由32位代码段387行的_ClockHandler函数处理
 %rep 95
-			Gate	SelectorCode32, SpuriousHandler,      0, DA_386IGate
+				Gate	SelectorCode32, SpuriousHandler,      0, DA_386IGate	;21h-7Fh号中断都由32位代码段401行的_SpuriousHandler函数处理
 %endrep
-.080h:			Gate	SelectorCode32,  UserIntHandler,      0, DA_386IGate
+.080h:			Gate	SelectorCode32,  UserIntHandler,      0, DA_386IGate	;80h号中断由32位代码段394行的_UserIntHandler函数处理
 
-IdtLen		equ	$ - LABEL_IDT
+IdtLen		equ	$ - LABEL_IDT	;IDT表的长度(当前地址-LABEL_IDT处地址)
 IdtPtr		dw	IdtLen		; 段界限
-		dd	0		; 基地址
+		dd	0		; 基地址(在216行会被改变)		;IdtPtr是关于IDT的一个小的数据结构
 ; END of [SECTION .idt]
 
 
@@ -216,11 +216,11 @@ LABEL_MEM_CHK_OK:
 	mov	dword [IdtPtr + 2], eax	; [IdtPtr + 2] <- idt 基地址
 
 	; 保存 IDTR
-	sidt	[_SavedIDTR]
+	sidt	[_SavedIDTR]	;_SavedIDTR定义于73行，用于保存IDTR
 
 	; 保存中断屏蔽寄存器(IMREG)值
-	in	al, 21h
-	mov	[_SavedIMREG], al
+	in	al, 21h		;从21h端口获取中断屏蔽寄存器(IMREG)值
+	mov	[_SavedIMREG], al	;_SavedIMREG定义于75行，用于保存中断屏蔽寄存器(IMREG)值
 
 	; 加载 GDTR
 	lgdt	[GdtPtr]
@@ -253,10 +253,10 @@ LABEL_REAL_ENTRY:		; 从保护模式跳回到实模式就到了这里
 	mov	ss, ax
 	mov	sp, [_wSPValueInRealMode]
 
-	lidt	[_SavedIDTR]	; 恢复 IDTR 的原值
+	lidt	[_SavedIDTR]	;从219行保存的_SavedIDTR变量中恢复 IDTR 的原值
 
-	mov	al, [_SavedIMREG]	; ┓恢复中断屏蔽寄存器(IMREG)的原值
-	out	21h, al			; ┛
+	mov	al, [_SavedIMREG]	
+	out	21h, al			;从223行保存的_SavedIMREG变量中恢复中断屏蔽寄存器(IMREG)的原值
 
 	in	al, 92h		; ┓
 	and	al, 11111101b	; ┣ 关闭 A20 地址线
@@ -277,133 +277,133 @@ LABEL_SEG_CODE32:
 	mov	ds, ax			; 数据段选择子
 	mov	es, ax
 	mov	ax, SelectorVideo
-	mov	gs, ax			; 视频段选择子
+	mov	gs, ax			; 视频段(屏幕缓冲区)选择子
 
 	mov	ax, SelectorStack
 	mov	ss, ax			; 堆栈段选择子
 	mov	esp, TopOfStack
 
-	call	Init8259A
+	call	Init8259A		;调用311行Init8259A,初始化8259A，写入ICW1,2,3,4和OCW1，仅接受时钟中断
 
-	int	080h
-	sti
-	jmp	$
-
+	int	080h	;产生80号中断，右上角出现字母'I'
+	sti		;开中断,设置IF位(虽然实模式下并没有关闭中断，但为了确保IF已经被设置，还是加上此句比较好)
+	jmp	$	;陷入死循环;定时器定时产生时钟中断，由319行代码知，时钟中断的中断号是20h，查IDT知_ClockHandler处理时钟中断，该函数将上述字母对应值递增以在右上角循环显示对应ASCII码值
+	;该函数中此后代码均不执行
 	; 下面显示一个字符串
-	push	szPMMessage
-	call	DispStr
-	add	esp, 4
+	push	szPMMessage		;将_szPMMessage地址入栈,szPMMessage在数据段中定义
+	call	DispStr		;显示"In Protect Mode now. ^-^"
+	add	esp, 4			;将栈指针下移，不使用pop就将字符串地址占用的空间释放
 
-	push	szMemChkTitle
-	call	DispStr
-	add	esp, 4
+	push	szMemChkTitle		;将_szMemChkTitle地址入栈,szMemChkTitle在数据段中定义
+	call	DispStr		;显示"BaseAddrL BaseAddrH LengthLow LengthHigh   Type"
+	add	esp, 4			;将栈指针下移，不使用pop就将字符串地址占用的空间释放
 
 	call	DispMemSize		; 显示内存信息
 
 	call	PagingDemo		; 演示改变页目录的效果
 
-	call	SetRealmode8259A
+	call	SetRealmode8259A	; 将8259A设置为实模式的状态
 
 	; 到此停止
 	jmp	SelectorCode16:0
 
 ; Init8259A ---------------------------------------------------------------------------------------------
 Init8259A:
-	mov	al, 011h
-	out	020h, al	; 主8259, ICW1.
+	mov	al, 011h	;第0位置1,表示需要ICW4,第4位置1,因为该位对ICW1必须为1
+	out	020h, al	;往端口20(主8259)写入ICW1.
+	call	io_delay	;四条空指令,为延迟函数，以等待操作完成,在379行定义
+
+	out	0A0h, al	;往端口A0(从8259)写入ICW1.意义同上
 	call	io_delay
 
-	out	0A0h, al	; 从8259, ICW1.
+	mov	al, 020h	;第5位置1，表示IRQ0对应中断向量号0x20
+	out	021h, al	;往端口21(主8259)写入ICW2.
 	call	io_delay
 
-	mov	al, 020h	; IRQ0 对应中断向量 0x20
-	out	021h, al	; 主8259, ICW2.
+	mov	al, 028h	;第3、5位置1，表示IRQ8对应中断向量号0x28
+	out	0A1h, al	;往端口A1(从8259)写入ICW2.
 	call	io_delay
 
-	mov	al, 028h	; IRQ8 对应中断向量 0x28
-	out	0A1h, al	; 从8259, ICW2.
+	mov	al, 004h	;第2位置1，表示IR2连接一块从8259
+	out	021h, al	;往端口21(主8259)写入ICW3.
 	call	io_delay
 
-	mov	al, 004h	; IR2 对应从8259
-	out	021h, al	; 主8259, ICW3.
+	mov	al, 002h	;第1位置1，表示该从8259连接在主8259的的IR2上
+	out	0A1h, al	;往端口A1(从8259)写入ICW3.
 	call	io_delay
 
-	mov	al, 002h	; 对应主8259的 IR2
-	out	0A1h, al	; 从8259, ICW3.
+	mov	al, 001h	;第0位置1，表示80x86模式
+	out	021h, al	;往端口21(主8259)写入ICW4.
 	call	io_delay
 
-	mov	al, 001h
-	out	021h, al	; 主8259, ICW4.
+	out	0A1h, al	;往端口A1(从8259)写入ICW4.意义同上.
 	call	io_delay
 
-	out	0A1h, al	; 从8259, ICW4.
-	call	io_delay
-
-	mov	al, 11111110b	; 仅仅开启定时器中断
+	mov	al, 11111110b	;第0位置0,仅仅开启时钟中断(IRQ0)
 	;mov	al, 11111111b	; 屏蔽主8259所有中断
-	out	021h, al	; 主8259, OCW1.
+	out	021h, al	;往端口21(主8259)写入OCW1.
 	call	io_delay
 
-	mov	al, 11111111b	; 屏蔽从8259所有中断
-	out	0A1h, al	; 从8259, OCW1.
+	mov	al, 11111111b	;所有位置1,屏蔽从8259所有中断
+	out	0A1h, al	;往端口A1(从8259)写入OCW1.
 	call	io_delay
 
 	ret
 ; Init8259A ---------------------------------------------------------------------------------------------
 
 
-; SetRealmode8259A ---------------------------------------------------------------------------------------------
+; 将8259A设置为实模式的状态 ---------------------------------------------------------------------------------------------
 SetRealmode8259A:
 	mov	ax, SelectorData
-	mov	fs, ax
+	mov	fs, ax		;数据段选择子
 
-	mov	al, 017h
-	out	020h, al	; 主8259, ICW1.
+	mov	al, 017h	;第4，2，1，0位置1，由级联8259变为单个8259；由8字节中断向量变为4字节中断向量
+	out	020h, al	;往端口20(主8259)写入ICW1.
 	call	io_delay
 
-	mov	al, 008h	; IRQ0 对应中断向量 0x8
-	out	021h, al	; 主8259, ICW2.
+	mov	al, 008h	;IRQ0 对应中断向量 0x8
+	out	021h, al	;往端口21(主8259)写入ICW2.
+	call	io_delay
+					;因为此时位单个8259，所以ICW3无需赋值，它不会被用到
+	mov	al, 001h	;第0位置1，表示80x86模式
+	out	021h, al	;往端口21(主8259)写入ICW4.
 	call	io_delay
 
-	mov	al, 001h
-	out	021h, al	; 主8259, ICW4.
-	call	io_delay
-
-	mov	al, [fs:SavedIMREG]	; ┓恢复中断屏蔽寄存器(IMREG)的原值
-	out	021h, al		; ┛
+	mov	al, [fs:SavedIMREG]	
+	out	021h, al		;从223行保存的_SavedIMREG变量中恢复中断屏蔽寄存器(IMREG)的原值
 	call	io_delay
 
 	ret
 ; SetRealmode8259A ---------------------------------------------------------------------------------------------
 
-io_delay:
+io_delay:	;四个连续的空语句，用于等待某操作完成
 	nop
 	nop
 	nop
 	nop
 	ret
 
-; int handler ---------------------------------------------------------------
-_ClockHandler:
-ClockHandler	equ	_ClockHandler - $$
-	inc	byte [gs:((80 * 0 + 70) * 2)]	; 屏幕第 0 行, 第 70 列。
+; 定义中断处理函数 ---------------------------------------------------------------
+_ClockHandler:			;通过时钟触发，将右上角的字母对应的值+1并显示值对应的ASCII字符
+ClockHandler	equ	_ClockHandler - $$		;_ClockHandler相对于本节开始处的偏移
+	inc	byte [gs:((80 * 0 + 70) * 2)]	; 使屏幕第0行,第70列的值+1，显示对应的ASCII字符
 	mov	al, 20h
-	out	20h, al				; 发送 EOI
+	out	20h, al				; 通过发送第5位置1的OCW2，向8259A发送EOI，以便继续接收中断(本例中为时钟中断)
 	iretd
 
-_UserIntHandler:
-UserIntHandler	equ	_UserIntHandler - $$
+_UserIntHandler:		;通过INT 80h引发，在屏幕右上角显示'I'
+UserIntHandler	equ	_UserIntHandler - $$	;_UserIntHandler相对于本节开始处的偏移
 	mov	ah, 0Ch				; 0000: 黑底    1100: 红字
 	mov	al, 'I'
-	mov	[gs:((80 * 0 + 70) * 2)], ax	; 屏幕第 0 行, 第 70 列。
+	mov	[gs:((80 * 0 + 70) * 2)], ax	;在屏幕第0行,第70列显示字母'I'
 	iretd
 
-_SpuriousHandler:
-SpuriousHandler	equ	_SpuriousHandler - $$
+_SpuriousHandler:		;此程序中没有出现该中断处理程序能够处理的中断
+SpuriousHandler	equ	_SpuriousHandler - $$	;_SpuriousHandler相对于本节开始处的偏移
 	mov	ah, 0Ch				; 0000: 黑底    1100: 红字
 	mov	al, '!'
-	mov	[gs:((80 * 0 + 75) * 2)], ax	; 屏幕第 0 行, 第 75 列。
-	jmp	$
+	mov	[gs:((80 * 0 + 75) * 2)], ax	; 在屏幕第0行第75列显示感叹号
+	jmp	$	;陷入死循环
 	iretd
 ; ---------------------------------------------------------------------------
 
