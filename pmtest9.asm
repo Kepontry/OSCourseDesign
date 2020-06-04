@@ -530,35 +530,35 @@ PSwitch:
 	mov	eax, LinearAddrDemo	; 把线性地址赋值给eax
 	shr	eax, 22			; 右移22位，留下地址的高十位，从而得到该线性地址对应的页目录表项的编号
 	mov	ebx, 4096		; 把4096赋值给ebx
-	mul	ebx			; 相乘，就得到
-	mov	ecx, eax		;
-	mov	eax, LinearAddrDemo	;
-	shr	eax, 12			;
-	and	eax, 03FFh		; 1111111111b (10 bits)
+	mul	ebx			; 相乘，就得到对应页表的首地址
+	mov	ecx, eax		; 将上述结果赋给ecx
+	mov	eax, LinearAddrDemo	; 再把线性地址赋给eax
+	shr	eax, 12			; 右移12位
+	and	eax, 03FFh		; 1111111111b (10 bits) 此操作后会留下原地址的12-21位
 	mov	ebx, 4			;
-	mul	ebx			;
-	add	eax, ecx		;
-	add	eax, PageTblBase1	;
-	mov	dword [es:eax], ProcBar | PG_P | PG_USU | PG_RWW	;
+	mul	ebx			; 乘以4即得到线性地址对应的页表表项相对于所在页表首地址的偏移
+	add	eax, ecx		; 加上偏移，就得到对应页表表项相对于页表首地址的偏移
+	add	eax, PageTblBase1	; 加上页表首地址，就得到对应页表表项相对于Flat段首地址的偏移
+	mov	dword [es:eax], ProcBar | PG_P | PG_USU | PG_RWW	; 向对应的PTE中写入ProBar的首地址和其他属性
 
-	mov	eax, PageDirBase1	;
+	mov	eax, PageDirBase1	; 将页目录首地址赋值给cr3
 	mov	cr3, eax		;
 	jmp	short .3		;
 .3:
-	nop				;
+	nop				; 空指令
 
-	ret				;
+	ret				; 返回
 ; ---------------------------------------------------------------------------
 
 
 ; PagingDemoProc ------------------------------------------------------------
 PagingDemoProc:
-OffsetPagingDemoProc	equ	PagingDemoProc - $$
-	mov	eax, LinearAddrDemo
+OffsetPagingDemoProc	equ	PagingDemoProc - $$	; 调用函数相对于数据段的偏移
+	mov	eax, LinearAddrDemo 			; 调用LinearAddrDemo处的代码
 	call	eax
-	retf
+	retf						; 返回
 ; ---------------------------------------------------------------------------
-LenPagingDemoAll	equ	$ - PagingDemoProc
+LenPagingDemoAll	equ	$ - PagingDemoProc	; 函数长度
 ; ---------------------------------------------------------------------------
 
 
@@ -566,13 +566,13 @@ LenPagingDemoAll	equ	$ - PagingDemoProc
 foo:
 OffsetFoo	equ	foo - $$
 	mov	ah, 0Ch				; 0000: 黑底    1100: 红字
-	mov	al, 'F'
+	mov	al, 'F'				; 显示字符F
 	mov	[gs:((80 * 17 + 0) * 2)], ax	; 屏幕第 17 行, 第 0 列。
-	mov	al, 'o'
+	mov	al, 'o'				; 显示字符o，执行两次
 	mov	[gs:((80 * 17 + 1) * 2)], ax	; 屏幕第 17 行, 第 1 列。
 	mov	[gs:((80 * 17 + 2) * 2)], ax	; 屏幕第 17 行, 第 2 列。
-	ret
-LenFoo	equ	$ - foo
+	ret					; 返回 
+LenFoo	equ	$ - foo				; 函数所占内存数
 ; ---------------------------------------------------------------------------
 
 
@@ -580,14 +580,14 @@ LenFoo	equ	$ - foo
 bar:
 OffsetBar	equ	bar - $$
 	mov	ah, 0Ch				; 0000: 黑底    1100: 红字
-	mov	al, 'B'
+	mov	al, 'B'				; 显示字符B
 	mov	[gs:((80 * 18 + 0) * 2)], ax	; 屏幕第 18 行, 第 0 列。
-	mov	al, 'a'
+	mov	al, 'a'				; 显示字符a
 	mov	[gs:((80 * 18 + 1) * 2)], ax	; 屏幕第 18 行, 第 1 列。
-	mov	al, 'r'
+	mov	al, 'r'				; 显示字符r
 	mov	[gs:((80 * 18 + 2) * 2)], ax	; 屏幕第 18 行, 第 2 列。
-	ret
-LenBar	equ	$ - bar
+	ret					; 返回
+LenBar	equ	$ - bar				; 函数所占内存量
 ; ---------------------------------------------------------------------------
 
 
@@ -634,7 +634,7 @@ DispMemSize:
 	pop	ecx
 	pop	edi
 	pop	esi
-	ret
+	ret				; 返回
 ; ---------------------------------------------------------------------------
 
 %include	"lib.inc"	; 库函数
