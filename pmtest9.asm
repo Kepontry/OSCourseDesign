@@ -18,7 +18,7 @@ ProcPagingDemo	equ	00301000h	; 用于测试分页机制的函数起始地址
 
 org	0100h
 	jmp	LABEL_BEGIN
-;Discriptor����pm.inc�е�298�ж���ĺ�
+;Discriptor是在pm.inc中第298行定义的宏
 [SECTION .gdt]
 ; GDT
 ;                                         段基址,       段界限     , 属性
@@ -48,15 +48,9 @@ SelectorStack		equ	LABEL_DESC_STACK	- LABEL_GDT
 SelectorVideo		equ	LABEL_DESC_VIDEO	- LABEL_GDT
 ; END of [SECTION .gdt]
 
-<<<<<<< HEAD
-[SECTION .data1]	 ; ���ݶ�
-ALIGN	32		;����αָ��,��αָ��������ڴ�����������һ���ܱ�32�����ĵ�ַ��ʼ����
-[BITS	32]		;˵��������32λ��
-=======
-[SECTION .data1]	 ; 数据段
-ALIGN	32
-[BITS	32]
->>>>>>> 01d9e0c19e26a04403c7927758ca4b0a85bee4b9
+[SECTION .data1]	  ; 数据段
+ALIGN	32		;对齐伪指令,本伪指令下面的内存变量必须从下一个能被32整除的地址开始分配
+[BITS	32]		;说明代码是32位段
 LABEL_DATA:
 ; 实模式下使用这些符号
 ; 字符串
@@ -104,7 +98,7 @@ DataLen			equ	$ - LABEL_DATA
 ; END of [SECTION .data1]
 
 
-; IDT
+; IDT 
 [SECTION .idt]
 ALIGN	32
 [BITS	32]
@@ -127,18 +121,18 @@ IdtPtr		dw	IdtLen		; 段界限
 
 ; 全局堆栈段
 [SECTION .gs]
-ALIGN	32
-[BITS	32]
+ALIGN	32		;对齐伪指令,本伪指令下面的内存变量必须从下一个能被32整除的地址开始分配
+[BITS	32]		;说明代码是32位段
 LABEL_STACK:
 	times 512 db 0
 
-TopOfStack	equ	$ - LABEL_STACK
+TopOfStack	equ	$ - LABEL_STACK		;栈顶
 
 ; END of [SECTION .gs]
 
 
 [SECTION .s16]
-[BITS	16]
+[BITS	16]		;代码为16位段
 LABEL_BEGIN:
 	mov	ax, cs		
 	mov	ds, ax
@@ -146,8 +140,8 @@ LABEL_BEGIN:
 	mov	ss, ax
 	mov	sp, 0100h
 
-	mov	[LABEL_GO_BACK_TO_REAL+3], ax		;ax��ʱ��ʵģʽ��cs,��ʵģʽcsת������ʵģʽʱ��jump���
-	mov	[_wSPValueInRealMode], sp		;����ջָ��sp�����ڱ���_wSPValueInRealMode��
+	mov	[LABEL_GO_BACK_TO_REAL+3], ax		;ax此时是实模式的cs,将实模式cs转给返回实模式时的jump语句
+	mov	[_wSPValueInRealMode], sp		;将堆栈指针sp保存在变量_wSPValueInRealMode中
 
 	; 得到内存数
 	mov	ebx, 0	; 将ebx置0，这是eax=0000E820h的15h号中断段的必要条件
@@ -170,73 +164,49 @@ LABEL_MEM_CHK_OK:
 	; 初始化 16 位代码段描述符
 	mov	ax, cs
 	movzx	eax, ax					
-	shl	eax, 4						;����ֵ������λ
-	add	eax, LABEL_SEG_CODE16		;eax����16λ����ε�ƫ�����õ�������ַ
-	mov	word [LABEL_DESC_CODE16 + 2], ax	;��������ַ��Ϊ3�η�������������Ӧ��λ��
+	shl	eax, 4						;将段值右移四位
+	add	eax, LABEL_SEG_CODE16		;eax加上16位代码段的偏移最后得到物理地址
+	mov	word [LABEL_DESC_CODE16 + 2], ax	;将物理地址分为3段放入描述符中相应的位置
 	shr	eax, 16
 	mov	byte [LABEL_DESC_CODE16 + 4], al
-	mov	byte [LABEL_DESC_CODE16 + 7], ah	;16λ�������������ʼ�����
+	mov	byte [LABEL_DESC_CODE16 + 7], ah	;16位代码段描述符初始化完成
 
-<<<<<<< HEAD
-	; ��ʼ�� 32 λ�����������
-	xor	eax, eax		;���Ĵ���eax��0
-=======
 	; 初始化 32 位代码段描述符
-	xor	eax, eax
->>>>>>> 01d9e0c19e26a04403c7927758ca4b0a85bee4b9
+	xor	eax, eax		;将寄存器eax置0
 	mov	ax, cs
-	shl	eax, 4						;����ֵ������λ
-	add	eax, LABEL_SEG_CODE32		;eax����32λ����ε�ƫ�����õ�������ַ
-	mov	word [LABEL_DESC_CODE32 + 2], ax	;��������ַ��Ϊ3�η�������������Ӧ��λ��
+	shl	eax, 4						;将段值右移四位
+	add	eax, LABEL_SEG_CODE32		;eax加上32位代码段的偏移最后得到物理地址
+	mov	word [LABEL_DESC_CODE32 + 2], ax	;将物理地址分为3段放入描述符中相应的位置
 	shr	eax, 16
 	mov	byte [LABEL_DESC_CODE32 + 4], al
-	mov	byte [LABEL_DESC_CODE32 + 7], ah	;32λ�������������ʼ�����
+	mov	byte [LABEL_DESC_CODE32 + 7], ah	;32位代码段描述符初始化完成
 
-<<<<<<< HEAD
-	; ��ʼ�����ݶ�������
-	xor	eax, eax		;���Ĵ���eax��0
-=======
 	; 初始化数据段描述符
-	xor	eax, eax
->>>>>>> 01d9e0c19e26a04403c7927758ca4b0a85bee4b9
+	xor	eax, eax		;将寄存器eax置0
 	mov	ax, ds
-	shl	eax, 4						;����ֵ������λ
-	add	eax, LABEL_DATA				;eax�������ݶε�ƫ�����õ�������ַ
-	mov	word [LABEL_DESC_DATA + 2], ax		;��������ַ��Ϊ3�η�������������Ӧ��λ��
+	shl	eax, 4						;将段值右移四位
+	add	eax, LABEL_DATA				;eax加上数据段的偏移最后得到物理地址
+	mov	word [LABEL_DESC_DATA + 2], ax		;将物理地址分为3段放入描述符中相应的位置
 	shr	eax, 16
 	mov	byte [LABEL_DESC_DATA + 4], al
-	mov	byte [LABEL_DESC_DATA + 7], ah		;���ݶ���������ʼ�����
+	mov	byte [LABEL_DESC_DATA + 7], ah		;数据段描述符初始化完成
 
-<<<<<<< HEAD
-	; ��ʼ����ջ��������
-	xor	eax, eax		;���Ĵ�����0
-=======
 	; 初始化堆栈段描述符
-	xor	eax, eax
->>>>>>> 01d9e0c19e26a04403c7927758ca4b0a85bee4b9
+	xor	eax, eax		;将寄存器置0
 	mov	ax, ds
-	shl	eax, 4						;����ֵ������λ
-	add	eax, LABEL_STACK			;eax���϶�ջ�ε�ƫ�����õ�������ַ
-	mov	word [LABEL_DESC_STACK + 2], ax		;��������ַ��Ϊ3�η�������������Ӧ��λ��
+	shl	eax, 4						;将段值右移四位
+	add	eax, LABEL_STACK			;eax加上堆栈段的偏移最后得到物理地址
+	mov	word [LABEL_DESC_STACK + 2], ax		;将物理地址分为3段放入描述符中相应的位置
 	shr	eax, 16
 	mov	byte [LABEL_DESC_STACK + 4], al
-	mov	byte [LABEL_DESC_STACK + 7], ah		;��ջ����������ʼ�����
+	mov	byte [LABEL_DESC_STACK + 7], ah		;堆栈段描述符初始化完成
 
-<<<<<<< HEAD
-	; Ϊ���� GDTR ��׼��
-	xor	eax, eax		;���Ĵ�����0
-	mov	ax, ds
-	shl	eax, 4					;����ֵ����4λ
-	add	eax, LABEL_GDT			;eax���϶�ջ�ε�ƫ�����õ�������ַ
-	mov	dword [GdtPtr + 2], eax		;gdt��ַ����gdtr
-=======
 	; 为加载 GDTR 作准备
-	xor	eax, eax
+	xor	eax, eax		;将寄存器置0
 	mov	ax, ds
-	shl	eax, 4
-	add	eax, LABEL_GDT		; eax <- gdt 基地址
-	mov	dword [GdtPtr + 2], eax	; [GdtPtr + 2] <- gdt 基地址
->>>>>>> 01d9e0c19e26a04403c7927758ca4b0a85bee4b9
+	shl	eax, 4					;将段值右移4位
+	add	eax, LABEL_GDT			;eax加上堆栈段的偏移最后得到物理地址
+	mov	dword [GdtPtr + 2], eax		;gdt基址存入gdtr
 
 	; 为加载 IDTR 作准备
 	xor	eax, eax
@@ -268,55 +238,34 @@ LABEL_MEM_CHK_OK:
 
 	; 准备切换到保护模式
 	mov	eax, cr0
-	or	eax, 1		;��cr0��PEλ��1
+	or	eax, 1		;将cr0的PE位置1
 	mov	cr0, eax	
 
-<<<<<<< HEAD
-	; �������뱣��ģʽ
-	jmp	dword SelectorCode32:0	; ��SelectorCode32װ��cs��������ת��LABEL_SEG_CODE32����275�У�
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-LABEL_REAL_ENTRY:		; �ӱ���ģʽ���ص�ʵģʽ�͵�������
-	mov	ax, cs		;�ָ������Ĵ�����ֵ
-=======
 	; 真正进入保护模式
-	jmp	dword SelectorCode32:0	; 执行这一句会把 SelectorCode32 装入 cs, 并跳转到 Code32Selector:0  处
+	jmp	dword SelectorCode32:0	; 将SelectorCode32装入cs，程序跳转至LABEL_SEG_CODE32处（275行）
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 LABEL_REAL_ENTRY:		; 从保护模式跳回到实模式就到了这里
-	mov	ax, cs
->>>>>>> 01d9e0c19e26a04403c7927758ca4b0a85bee4b9
+	mov	ax, cs		;恢复各个寄存器的值
 	mov	ds, ax
 	mov	es, ax
 	mov	ss, ax
-	mov	sp, [_wSPValueInRealMode]	;�ָ�ջָ��
+	mov	sp, [_wSPValueInRealMode]	;恢复栈指针
 
 	lidt	[_SavedIDTR]	;从219行保存的_SavedIDTR变量中恢复 IDTR 的原值
 
 	mov	al, [_SavedIMREG]	
 	out	21h, al			;从223行保存的_SavedIMREG变量中恢复中断屏蔽寄存器(IMREG)的原值
 
-<<<<<<< HEAD
-	in	al, 92h		;�ر�A20��ַ��
+	in	al, 92h		;关闭A20地址线
 	and	al, 11111101b	
 	out	92h, al		
-=======
-	in	al, 92h		; ┓
-	and	al, 11111101b	; ┣ 关闭 A20 地址线
-	out	92h, al		; ┛
->>>>>>> 01d9e0c19e26a04403c7927758ca4b0a85bee4b9
 
 	sti			; 开中断
 
-<<<<<<< HEAD
-	mov	ax, 4c00h	;�ص�DOS
+	mov	ax, 4c00h	;回到DOS
 	int	21h		
-=======
-	mov	ax, 4c00h	; ┓
-	int	21h		; ┛回到 DOS
->>>>>>> 01d9e0c19e26a04403c7927758ca4b0a85bee4b9
 ; END of [SECTION .s16]
 
 
@@ -331,13 +280,8 @@ LABEL_SEG_CODE32:
 	mov	gs, ax			; 视频段(屏幕缓冲区)选择子
 
 	mov	ax, SelectorStack
-<<<<<<< HEAD
-	mov	ss, ax			; ��ջ��ѡ����
-	mov	esp, TopOfStack		;�����¶�ջջ��ָ��
-=======
 	mov	ss, ax			; 堆栈段选择子
-	mov	esp, TopOfStack
->>>>>>> 01d9e0c19e26a04403c7927758ca4b0a85bee4b9
+	mov	esp, TopOfStack		;设置新堆栈栈顶指针
 
 	call	Init8259A		;调用311行Init8259A,初始化8259A，写入ICW1,2,3,4和OCW1，仅接受时钟中断
 
@@ -360,13 +304,8 @@ LABEL_SEG_CODE32:
 
 	call	SetRealmode8259A	; 将8259A设置为实模式的状态
 
-<<<<<<< HEAD
-	; ����ֹͣ
-	jmp	SelectorCode16:0	;��תȥCODE16�Σ�650�У���Ϊ����ʵģʽ����׼������
-=======
 	; 到此停止
-	jmp	SelectorCode16:0
->>>>>>> 01d9e0c19e26a04403c7927758ca4b0a85bee4b9
+	jmp	SelectorCode16:0	;跳转去CODE16段（650行），为返回实模式进行准备工作
 
 ; Init8259A ---------------------------------------------------------------------------------------------
 Init8259A:
@@ -706,35 +645,23 @@ SegCode32Len	equ	$ - LABEL_SEG_CODE32
 
 ; 16 位代码段. 由 32 位代码段跳入, 跳出后到实模式
 [SECTION .s16code]
-ALIGN	32		;����αָ��,��αָ��������ڴ�����������һ���ܱ�32�����ĵ�ַ��ʼ����
-[BITS	16]		;ָ��������16λ��
+ALIGN	32		;对齐伪指令,本伪指令下面的内存变量必须从下一个能被32整除的地址开始分配
+[BITS	16]		;指明代码是16位段
 LABEL_SEG_CODE16:
-<<<<<<< HEAD
-	; ����ʵģʽ:
-	mov	ax, SelectorNormal		;��ѡ����װ��ds,es,fs,gs,ss�Ĵ�����
-	mov	ds, ax					;��Щ�μĴ����е����ݻ����ѡ����
-	mov	es, ax					;���³�����ʵģʽҪ��ĸ��ٻ���Ĵ���
-=======
 	; 跳回实模式:
-	mov	ax, SelectorNormal
-	mov	ds, ax
-	mov	es, ax
->>>>>>> 01d9e0c19e26a04403c7927758ca4b0a85bee4b9
+	mov	ax, SelectorNormal		;将选择子装入ds,es,fs,gs,ss寄存器中
+	mov	ds, ax					;这些段寄存器中的内容会根据选择子
+	mov	es, ax					;更新出符合实模式要求的高速缓冲寄存器
 	mov	fs, ax
 	mov	gs, ax
 	mov	ss, ax
 
-	mov	eax, cr0		;��cr0��PEλ��0
+	mov	eax, cr0		;将cr0的PE位置0
 	and	al, 11111110b
 	mov	cr0, eax
 
-<<<<<<< HEAD
-LABEL_GO_BACK_TO_REAL:		;����ʵģʽ��������ת��LABEL_REAL_ENTRY��249�У�
-	jmp	0:LABEL_REAL_ENTRY	; �ε�ַ���ڳ���ʼ�������ó���ȷ��ֵ
-=======
-LABEL_GO_BACK_TO_REAL:
+LABEL_GO_BACK_TO_REAL:		;返回实模式，程序将跳转至LABEL_REAL_ENTRY（249行）
 	jmp	0:LABEL_REAL_ENTRY	; 段地址会在程序开始处被设置成正确的值
->>>>>>> 01d9e0c19e26a04403c7927758ca4b0a85bee4b9
 
 Code16Len	equ	$ - LABEL_SEG_CODE16
 
