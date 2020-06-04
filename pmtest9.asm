@@ -1,43 +1,43 @@
 ; ==========================================
 ; pmtest9.asm
-; ±àÒë·½·¨£ºnasm pmtest9.asm -o pmtest9.com
+; ç¼–è¯‘æ–¹æ³•ï¼šnasm pmtest9.asm -o pmtest9.com
 ; ==========================================
 
-%include	"pm.inc"	; ³£Á¿, ºê, ÒÔ¼°Ò»Ğ©ËµÃ÷
+%include	"pm.inc"	; å¸¸é‡, å®, ä»¥åŠä¸€äº›è¯´æ˜
 
-PageDirBase0		equ	200000h	; Ò³Ä¿Â¼¿ªÊ¼µØÖ·:	2M
-PageTblBase0		equ	201000h	; Ò³±í¿ªÊ¼µØÖ·:		2M +  4K
-PageDirBase1		equ	210000h	; Ò³Ä¿Â¼¿ªÊ¼µØÖ·:	2M + 64K
-PageTblBase1		equ	211000h	; Ò³±í¿ªÊ¼µØÖ·:		2M + 64K + 4K
+PageDirBase0		equ	200000h	; é¡µç›®å½•å¼€å§‹åœ°å€:	2M
+PageTblBase0		equ	201000h	; é¡µè¡¨å¼€å§‹åœ°å€:		2M +  4K
+PageDirBase1		equ	210000h	; é¡µç›®å½•å¼€å§‹åœ°å€:	2M + 64K
+PageTblBase1		equ	211000h	; é¡µè¡¨å¼€å§‹åœ°å€:		2M + 64K + 4K
 
-LinearAddrDemo	equ	00401000h
-ProcFoo		equ	00401000h
-ProcBar		equ	00501000h
+LinearAddrDemo	equ	00401000h	; å®ç°åœ°å€æ˜ å°„çš„çº¿æ€§åœ°å€ï¼Œåˆ†åˆ«æ˜ å°„åˆ°ProcFooå’ŒProcBar
+ProcFoo		equ	00401000h	; å‡½æ•°ProcFooçš„èµ·å§‹åœ°å€
+ProcBar		equ	00501000h	; å‡½æ•°ProcBarçš„èµ·å§‹åœ°å€
 
-ProcPagingDemo	equ	00301000h
+ProcPagingDemo	equ	00301000h	; ç”¨äºæµ‹è¯•åˆ†é¡µæœºåˆ¶çš„å‡½æ•°èµ·å§‹åœ°å€
 
 org	0100h
 	jmp	LABEL_BEGIN
 
 [SECTION .gdt]
 ; GDT
-;                                         ¶Î»ùÖ·,       ¶Î½çÏŞ     , ÊôĞÔ
-LABEL_GDT:		Descriptor	       0,                 0, 0				; ¿ÕÃèÊö·û
-LABEL_DESC_NORMAL:	Descriptor	       0,            0ffffh, DA_DRW			; Normal ÃèÊö·û
-LABEL_DESC_FLAT_C:	Descriptor             0,           0fffffh, DA_CR | DA_32 | DA_LIMIT_4K; 0 ~ 4G
+;                                         æ®µåŸºå€,       æ®µç•Œé™     , å±æ€§
+LABEL_GDT:		Descriptor	       0,                 0, 0				; ç©ºæè¿°ç¬¦
+LABEL_DESC_NORMAL:	Descriptor	       0,            0ffffh, DA_DRW			; Normal æè¿°ç¬¦
+LABEL_DESC_FLAT_C:	Descriptor             0,           0fffffh, DA_CR | DA_32 | DA_LIMIT_4K; 0 ~ 4Gï¼Œ
 LABEL_DESC_FLAT_RW:	Descriptor             0,           0fffffh, DA_DRW | DA_LIMIT_4K	; 0 ~ 4G
-LABEL_DESC_CODE32:	Descriptor	       0,  SegCode32Len - 1, DA_CR | DA_32		; ·ÇÒ»ÖÂ´úÂë¶Î, 32
-LABEL_DESC_CODE16:	Descriptor	       0,            0ffffh, DA_C			; ·ÇÒ»ÖÂ´úÂë¶Î, 16
+LABEL_DESC_CODE32:	Descriptor	       0,  SegCode32Len - 1, DA_CR | DA_32		; éä¸€è‡´ä»£ç æ®µ, 32
+LABEL_DESC_CODE16:	Descriptor	       0,            0ffffh, DA_C			; éä¸€è‡´ä»£ç æ®µ, 16
 LABEL_DESC_DATA:	Descriptor	       0,	DataLen - 1, DA_DRW			; Data
-LABEL_DESC_STACK:	Descriptor	       0,        TopOfStack, DA_DRWA | DA_32		; Stack, 32 Î»
-LABEL_DESC_VIDEO:	Descriptor	 0B8000h,            0ffffh, DA_DRW			; ÏÔ´æÊ×µØÖ·
-; GDT ½áÊø
+LABEL_DESC_STACK:	Descriptor	       0,        TopOfStack, DA_DRWA | DA_32		; Stack, 32 ä½
+LABEL_DESC_VIDEO:	Descriptor	 0B8000h,            0ffffh, DA_DRW			; æ˜¾å­˜é¦–åœ°å€
+; GDT ç»“æŸ
 
-GdtLen		equ	$ - LABEL_GDT	; GDT³¤¶È
-GdtPtr		dw	GdtLen		; GDT½çÏŞ
-		dd	0		; GDT»ùµØÖ·
+GdtLen		equ	$ - LABEL_GDT	; GDTé•¿åº¦
+GdtPtr		dw	GdtLen		; GDTç•Œé™
+		dd	0		; GDTåŸºåœ°å€
 
-; GDT Ñ¡Ôñ×Ó
+; GDT é€‰æ‹©å­
 SelectorNormal		equ	LABEL_DESC_NORMAL	- LABEL_GDT
 SelectorFlatC		equ	LABEL_DESC_FLAT_C	- LABEL_GDT
 SelectorFlatRW		equ	LABEL_DESC_FLAT_RW	- LABEL_GDT
@@ -48,51 +48,51 @@ SelectorStack		equ	LABEL_DESC_STACK	- LABEL_GDT
 SelectorVideo		equ	LABEL_DESC_VIDEO	- LABEL_GDT
 ; END of [SECTION .gdt]
 
-[SECTION .data1]	 ; Êı¾İ¶Î
+[SECTION .data1]	 ; æ•°æ®æ®µ
 ALIGN	32
 [BITS	32]
 LABEL_DATA:
-; ÊµÄ£Ê½ÏÂÊ¹ÓÃÕâĞ©·ûºÅ
-; ×Ö·û´®
-_szPMMessage:			db	"In Protect Mode now. ^-^", 0Ah, 0Ah, 0	; ½øÈë±£»¤Ä£Ê½ºóÏÔÊ¾´Ë×Ö·û´®,0A´ú±í»»ĞĞ,0´ú±í×Ö·û´®½áÎ²'\0',ÕâĞ©²ÎÊıÔÚDispStrÖĞ»áµÃµ½´¦Àí
-_szMemChkTitle:			db	"BaseAddrL BaseAddrH LengthLow LengthHigh   Type", 0Ah, 0	; ½øÈë±£»¤Ä£Ê½ºóÏÔÊ¾´Ë×Ö·û´®,0A´ú±í»»ĞĞ,0´ú±í×Ö·û´®½áÎ²'\0'
-_szRAMSize			db	"RAM size:", 0		;ÔÚDispMemSize(ÏÔÊ¾ÄÚ´æĞÅÏ¢)ÖĞ±»Ê¹ÓÃ,0´ú±í×Ö·û´®½áÎ²'\0'
-_szReturn			db	0Ah, 0	;Ïàµ±ÓÚÒ»¸ö»»ĞĞ·û£¬ÔÚDispReturnÖĞ±»Ê¹ÓÃ
-; ±äÁ¿
+; å®æ¨¡å¼ä¸‹ä½¿ç”¨è¿™äº›ç¬¦å·
+; å­—ç¬¦ä¸²
+_szPMMessage:			db	"In Protect Mode now. ^-^", 0Ah, 0Ah, 0	; è¿›å…¥ä¿æŠ¤æ¨¡å¼åæ˜¾ç¤ºæ­¤å­—ç¬¦ä¸²,0Aä»£è¡¨æ¢è¡Œ,0ä»£è¡¨å­—ç¬¦ä¸²ç»“å°¾'\0',è¿™äº›å‚æ•°åœ¨DispSträ¸­ä¼šå¾—åˆ°å¤„ç†
+_szMemChkTitle:			db	"BaseAddrL BaseAddrH LengthLow LengthHigh   Type", 0Ah, 0	; è¿›å…¥ä¿æŠ¤æ¨¡å¼åæ˜¾ç¤ºæ­¤å­—ç¬¦ä¸²,0Aä»£è¡¨æ¢è¡Œ,0ä»£è¡¨å­—ç¬¦ä¸²ç»“å°¾'\0'
+_szRAMSize			db	"RAM size:", 0		;åœ¨DispMemSize(æ˜¾ç¤ºå†…å­˜ä¿¡æ¯)ä¸­è¢«ä½¿ç”¨,0ä»£è¡¨å­—ç¬¦ä¸²ç»“å°¾'\0'
+_szReturn			db	0Ah, 0	;ç›¸å½“äºä¸€ä¸ªæ¢è¡Œç¬¦ï¼Œåœ¨DispReturnä¸­è¢«ä½¿ç”¨
+; å˜é‡
 _wSPValueInRealMode		dw	0
 _dwMCRNumber:			dd	0	; Memory Check Result
-_dwDispPos:			dd	(80 * 6 + 0) * 2	; ÆÁÄ»µÚ 6 ĞĞ, µÚ 0 ÁĞ¡£ÓÃÓÚÏÔÊ¾ÏÂÒ»¸öÄÚÈİÔÚÆÁÄ»ÉÏ½«ÒªÊä³öµÄÎ»ÖÃ
-_dwMemSize:			dd	0
-_ARDStruct:			; Address Range Descriptor Structure
-	_dwBaseAddrLow:		dd	0
-	_dwBaseAddrHigh:	dd	0
-	_dwLengthLow:		dd	0
-	_dwLengthHigh:		dd	0
-	_dwType:		dd	0
-_PageTableNumber:		dd	0
-_SavedIDTR:			dd	0	;ÓÃÓÚ±£´æ IDTR
+_dwDispPos:			dd	(80 * 6 + 0) * 2	; å±å¹•ç¬¬ 6 è¡Œ, ç¬¬ 0 åˆ—ã€‚ç”¨äºæ˜¾ç¤ºä¸‹ä¸€ä¸ªå†…å®¹åœ¨å±å¹•ä¸Šå°†è¦è¾“å‡ºçš„ä½ç½®
+_dwMemSize:			dd	0	; ç”¨äºå­˜æ”¾æœºå™¨çš„å†…å­˜å¤§å°ï¼Œä¾¿äºè®¡ç®—æ‰€éœ€å®šä¹‰çš„é¡µè¡¨è¡¨é¡¹æ•°
+_ARDStruct:			; Address Range Descriptor Structure åœ°å€èŒƒå›´æè¿°ç¬¦ç»“æ„ï¼Œç”¨äºè¯»å–ç”±15hå·ä¸­æ–­è¾“å‡ºçš„å†…å­˜ä¿¡æ¯
+	_dwBaseAddrLow:		dd	0	; å­˜æ”¾åœ°å€æ®µåŸºå€çš„ä½32ä½
+	_dwBaseAddrHigh:	dd	0	; å­˜æ”¾åœ°å€æ®µåŸºå€çš„é«˜32ä½
+	_dwLengthLow:		dd	0	; å­˜æ”¾åœ°å€æ®µé•¿åº¦çš„ä½32ä½
+	_dwLengthHigh:		dd	0	; å­˜æ”¾åœ°å€æ®µé•¿åº¦çš„é«˜32ä½
+	_dwType:		dd	0	; å­˜æ”¾åœ°å€æ®µçš„è¯»å†™å’Œè®¿é—®æƒé™ç­‰å±æ€§
+_PageTableNumber:		dd	0	; å­˜æ”¾é¡µè¡¨çš„ä¸ªæ•°
+_SavedIDTR:			dd	0	;ç”¨äºä¿å­˜ IDTR
 				dd	0
-_SavedIMREG:			db	0	;ÓÃÓÚ±£´æÖĞ¶ÏÆÁ±Î¼Ä´æÆ÷Öµ
-_MemChkBuf:	times	256	db	0
+_SavedIMREG:			db	0	;ç”¨äºä¿å­˜ä¸­æ–­å±è”½å¯„å­˜å™¨å€¼
+_MemChkBuf:	times	256	db	0	;ç”¨äºå­˜æ”¾ç”±15hå·ä¸­æ–­è¾“å‡ºçš„å†…å­˜ä¿¡æ¯ï¼ˆæ¯æ¬¡20ä¸ªå­—èŠ‚ï¼‰ï¼Œæœ€å¤šå¯å­˜æ”¾12ä¸ª
 
-; ±£»¤Ä£Ê½ÏÂÊ¹ÓÃÕâĞ©·ûºÅ
-szPMMessage		equ	_szPMMessage	- $$
-szMemChkTitle		equ	_szMemChkTitle	- $$
-szRAMSize		equ	_szRAMSize	- $$
-szReturn		equ	_szReturn	- $$
-dwDispPos		equ	_dwDispPos	- $$	;_dwDispPos±äÁ¿Ïà¶ÔÓÚ±¾½Ú¿ªÊ¼´¦µÄÆ«ÒÆ
-dwMemSize		equ	_dwMemSize	- $$
-dwMCRNumber		equ	_dwMCRNumber	- $$
-ARDStruct		equ	_ARDStruct	- $$
-	dwBaseAddrLow	equ	_dwBaseAddrLow	- $$
-	dwBaseAddrHigh	equ	_dwBaseAddrHigh	- $$
-	dwLengthLow	equ	_dwLengthLow	- $$
-	dwLengthHigh	equ	_dwLengthHigh	- $$
-	dwType		equ	_dwType		- $$
-MemChkBuf		equ	_MemChkBuf	- $$
-SavedIDTR		equ	_SavedIDTR	- $$
-SavedIMREG		equ	_SavedIMREG	- $$
-PageTableNumber		equ	_PageTableNumber- $$
+; ä¿æŠ¤æ¨¡å¼ä¸‹ä½¿ç”¨è¿™äº›ç¬¦å·
+szPMMessage		equ	_szPMMessage	- $$	; _szPMMessageå˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+szMemChkTitle		equ	_szMemChkTitle	- $$	; _szMemChkTitleå˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+szRAMSize		equ	_szRAMSize	- $$	; _szRAMSizeå˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+szReturn		equ	_szReturn	- $$	; _szReturnå˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+dwDispPos		equ	_dwDispPos	- $$	;_dwDispPoså˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+dwMemSize		equ	_dwMemSize	- $$	; _dwMemSizeå˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+dwMCRNumber		equ	_dwMCRNumber	- $$	; _dwMCRNumberå˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+ARDStruct		equ	_ARDStruct	- $$	; _ARDStructç»“æ„ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+	dwBaseAddrLow	equ	_dwBaseAddrLow	- $$	; _dwBaseAddrLowå˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+	dwBaseAddrHigh	equ	_dwBaseAddrHigh	- $$	; _dwBaseAddrHighå˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+	dwLengthLow	equ	_dwLengthLow	- $$	; _dwLengthLowå˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+	dwLengthHigh	equ	_dwLengthHigh	- $$	; _dwLengthHighå˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+	dwType		equ	_dwType		- $$	; _dwTypeå˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+MemChkBuf		equ	_MemChkBuf	- $$	; _MemChkBufå˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+SavedIDTR		equ	_SavedIDTR	- $$	; _SavedIDTRå˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+SavedIMREG		equ	_SavedIMREG	- $$	; _SavedIMREGå˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+PageTableNumber		equ	_PageTableNumber- $$	; _PageTableNumberå˜é‡ç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
 
 DataLen			equ	$ - LABEL_DATA
 ; END of [SECTION .data1]
@@ -103,23 +103,23 @@ DataLen			equ	$ - LABEL_DATA
 ALIGN	32
 [BITS	32]
 LABEL_IDT:
-; ÖĞ¶ÏÃÅ                 Ä¿±ê¶ÎÑ¡Ôñ×Ó,       Æ«ÒÆ, 			DCount, ÊôĞÔ
+; ä¸­æ–­é—¨                 ç›®æ ‡æ®µé€‰æ‹©å­,       åç§», 			DCount, å±æ€§
 %rep 32
-				Gate	SelectorCode32, SpuriousHandler,      0, DA_386IGate	;0-1FhºÅÖĞ¶Ï¶¼ÓÉ32Î»´úÂë¶Î401ĞĞµÄ_SpuriousHandlerº¯Êı´¦Àí
+				Gate	SelectorCode32, SpuriousHandler,      0, DA_386IGate	;0-1Fhå·ä¸­æ–­éƒ½ç”±32ä½ä»£ç æ®µ401è¡Œçš„_SpuriousHandlerå‡½æ•°å¤„ç†
 %endrep
-.020h:			Gate	SelectorCode32,    ClockHandler,      0, DA_386IGate	;20hºÅÖĞ¶ÏÓÉ32Î»´úÂë¶Î387ĞĞµÄ_ClockHandlerº¯Êı´¦Àí
+.020h:			Gate	SelectorCode32,    ClockHandler,      0, DA_386IGate	;20hå·ä¸­æ–­ç”±32ä½ä»£ç æ®µ387è¡Œçš„_ClockHandlerå‡½æ•°å¤„ç†
 %rep 95
-				Gate	SelectorCode32, SpuriousHandler,      0, DA_386IGate	;21h-7FhºÅÖĞ¶Ï¶¼ÓÉ32Î»´úÂë¶Î401ĞĞµÄ_SpuriousHandlerº¯Êı´¦Àí
+				Gate	SelectorCode32, SpuriousHandler,      0, DA_386IGate	;21h-7Fhå·ä¸­æ–­éƒ½ç”±32ä½ä»£ç æ®µ401è¡Œçš„_SpuriousHandlerå‡½æ•°å¤„ç†
 %endrep
-.080h:			Gate	SelectorCode32,  UserIntHandler,      0, DA_386IGate	;80hºÅÖĞ¶ÏÓÉ32Î»´úÂë¶Î394ĞĞµÄ_UserIntHandlerº¯Êı´¦Àí
+.080h:			Gate	SelectorCode32,  UserIntHandler,      0, DA_386IGate	;80hå·ä¸­æ–­ç”±32ä½ä»£ç æ®µ394è¡Œçš„_UserIntHandlerå‡½æ•°å¤„ç†
 
-IdtLen		equ	$ - LABEL_IDT	;IDT±íµÄ³¤¶È(µ±Ç°µØÖ·-LABEL_IDT´¦µØÖ·)
-IdtPtr		dw	IdtLen		; ¶Î½çÏŞ
-		dd	0		; »ùµØÖ·(ÔÚ216ĞĞ»á±»¸Ä±ä)		;IdtPtrÊÇ¹ØÓÚIDTµÄÒ»¸öĞ¡µÄÊı¾İ½á¹¹
+IdtLen		equ	$ - LABEL_IDT	;IDTè¡¨çš„é•¿åº¦(å½“å‰åœ°å€-LABEL_IDTå¤„åœ°å€)
+IdtPtr		dw	IdtLen		; æ®µç•Œé™
+		dd	0		; åŸºåœ°å€(åœ¨216è¡Œä¼šè¢«æ”¹å˜)		;IdtPtræ˜¯å…³äºIDTçš„ä¸€ä¸ªå°çš„æ•°æ®ç»“æ„
 ; END of [SECTION .idt]
 
 
-; È«¾Ö¶ÑÕ»¶Î
+; å…¨å±€å †æ ˆæ®µ
 [SECTION .gs]
 ALIGN	32
 [BITS	32]
@@ -143,25 +143,25 @@ LABEL_BEGIN:
 	mov	[LABEL_GO_BACK_TO_REAL+3], ax
 	mov	[_wSPValueInRealMode], sp
 
-	; µÃµ½ÄÚ´æÊı
-	mov	ebx, 0
-	mov	di, _MemChkBuf
-.loop:
-	mov	eax, 0E820h
-	mov	ecx, 20
-	mov	edx, 0534D4150h
-	int	15h
-	jc	LABEL_MEM_CHK_FAIL
-	add	di, 20
-	inc	dword [_dwMCRNumber]
-	cmp	ebx, 0
+	; å¾—åˆ°å†…å­˜æ•°
+	mov	ebx, 0	; å°†ebxç½®0ï¼Œè¿™æ˜¯eax=0000E820hçš„15hå·ä¸­æ–­æ®µçš„å¿…è¦æ¡ä»¶
+	mov	di, _MemChkBuf	;è®©diæŒ‡å‘å†…å­˜ä¿¡æ¯ç¼“å†²åŒºçš„é¦–å€ï¼Œç”¨äºå­˜æ”¾ä¸­æ–­è¾“å‡ºçš„å†…å­˜ä¿¡æ¯
+.loop:	;å¾ªç¯
+	mov	eax, 0E820h		; å°†eaxç½®ä¸º0000E820h
+	mov	ecx, 20			; è¡¨ç¤ºè¯»å–å†…å­˜ä¿¡æ¯åBIOSæ‰€å­˜æ”¾çš„å­—èŠ‚æ•°ï¼Œä½†é€šå¸¸æ— è®ºecxå¤šå¤§BIOSå‡å¡«å……20å­—èŠ‚
+	mov	edx, 0534D4150h 	; 'SMAP', BIOSä¼šåˆ©ç”¨æ­¤æ ‡å¿—å¯¹ç³»ç»Ÿæ˜ åƒä¿¡æ¯è¿›è¡Œæ ¡éªŒå¹¶å­˜æ”¾åˆ°es:diæ‰€æŒ‡å‘çš„ç©ºé—´ä¸­
+	int	15h			; è°ƒç”¨15hä¸­æ–­
+	jc	LABEL_MEM_CHK_FAIL	; å½“cfè¢«ç½®ä½æ—¶å°±ä¼šè·³è½¬ç»“æŸå¾ªç¯
+	add	di, 20			; è®©es:diæŒ‡å‘ç¼“å†²åŒºä¸­çš„ä¸‹20ä¸ªå­—èŠ‚ç»§ç»­å­˜æ”¾å†…å­˜ä¿¡æ¯
+	inc	dword [_dwMCRNumber]	; è®©_dwMCRNumberå¢åŠ ä¸€ï¼Œè¿™ä¸ªå˜é‡è®°å½•äº†å¾ªç¯æ¬¡æ•°ï¼Œä¹Ÿå°±æ˜¯åœ°å€èŒƒå›´æè¿°ç¬¦çš„ä¸ªæ•°
+	cmp	ebx, 0			; å¦‚æœebxä¸º0åˆ™è·³å‡ºå¾ªç¯ï¼Œå¦åˆ™ç»§ç»­è¯»å–
 	jne	.loop
-	jmp	LABEL_MEM_CHK_OK
+	jmp	LABEL_MEM_CHK_OK	
 LABEL_MEM_CHK_FAIL:
-	mov	dword [_dwMCRNumber], 0
+	mov	dword [_dwMCRNumber], 0 ; å¦‚æœæ˜¯cfè¢«ç½®ä½å¼•èµ·çš„å¾ªç¯è°ƒå‡ºï¼Œåˆ™å°†MCRä¸ªæ•°ç½®ä¸º0
 LABEL_MEM_CHK_OK:
 
-	; ³õÊ¼»¯ 16 Î»´úÂë¶ÎÃèÊö·û
+	; åˆå§‹åŒ– 16 ä½ä»£ç æ®µæè¿°ç¬¦
 	mov	ax, cs
 	movzx	eax, ax
 	shl	eax, 4
@@ -171,7 +171,7 @@ LABEL_MEM_CHK_OK:
 	mov	byte [LABEL_DESC_CODE16 + 4], al
 	mov	byte [LABEL_DESC_CODE16 + 7], ah
 
-	; ³õÊ¼»¯ 32 Î»´úÂë¶ÎÃèÊö·û
+	; åˆå§‹åŒ– 32 ä½ä»£ç æ®µæè¿°ç¬¦
 	xor	eax, eax
 	mov	ax, cs
 	shl	eax, 4
@@ -181,7 +181,7 @@ LABEL_MEM_CHK_OK:
 	mov	byte [LABEL_DESC_CODE32 + 4], al
 	mov	byte [LABEL_DESC_CODE32 + 7], ah
 
-	; ³õÊ¼»¯Êı¾İ¶ÎÃèÊö·û
+	; åˆå§‹åŒ–æ•°æ®æ®µæè¿°ç¬¦
 	xor	eax, eax
 	mov	ax, ds
 	shl	eax, 4
@@ -191,7 +191,7 @@ LABEL_MEM_CHK_OK:
 	mov	byte [LABEL_DESC_DATA + 4], al
 	mov	byte [LABEL_DESC_DATA + 7], ah
 
-	; ³õÊ¼»¯¶ÑÕ»¶ÎÃèÊö·û
+	; åˆå§‹åŒ–å †æ ˆæ®µæè¿°ç¬¦
 	xor	eax, eax
 	mov	ax, ds
 	shl	eax, 4
@@ -201,353 +201,353 @@ LABEL_MEM_CHK_OK:
 	mov	byte [LABEL_DESC_STACK + 4], al
 	mov	byte [LABEL_DESC_STACK + 7], ah
 
-	; Îª¼ÓÔØ GDTR ×÷×¼±¸
+	; ä¸ºåŠ è½½ GDTR ä½œå‡†å¤‡
 	xor	eax, eax
 	mov	ax, ds
 	shl	eax, 4
-	add	eax, LABEL_GDT		; eax <- gdt »ùµØÖ·
-	mov	dword [GdtPtr + 2], eax	; [GdtPtr + 2] <- gdt »ùµØÖ·
+	add	eax, LABEL_GDT		; eax <- gdt åŸºåœ°å€
+	mov	dword [GdtPtr + 2], eax	; [GdtPtr + 2] <- gdt åŸºåœ°å€
 
-	; Îª¼ÓÔØ IDTR ×÷×¼±¸
+	; ä¸ºåŠ è½½ IDTR ä½œå‡†å¤‡
 	xor	eax, eax
 	mov	ax, ds
 	shl	eax, 4
-	add	eax, LABEL_IDT		; eax <- idt »ùµØÖ·
-	mov	dword [IdtPtr + 2], eax	; [IdtPtr + 2] <- idt »ùµØÖ·
+	add	eax, LABEL_IDT		; eax <- idt åŸºåœ°å€
+	mov	dword [IdtPtr + 2], eax	; [IdtPtr + 2] <- idt åŸºåœ°å€
 
-	; ±£´æ IDTR
-	sidt	[_SavedIDTR]	;_SavedIDTR¶¨ÒåÓÚ73ĞĞ£¬ÓÃÓÚ±£´æIDTR
+	; ä¿å­˜ IDTR
+	sidt	[_SavedIDTR]	;_SavedIDTRå®šä¹‰äº73è¡Œï¼Œç”¨äºä¿å­˜IDTR
 
-	; ±£´æÖĞ¶ÏÆÁ±Î¼Ä´æÆ÷(IMREG)Öµ
-	in	al, 21h		;´Ó21h¶Ë¿Ú»ñÈ¡ÖĞ¶ÏÆÁ±Î¼Ä´æÆ÷(IMREG)Öµ
-	mov	[_SavedIMREG], al	;_SavedIMREG¶¨ÒåÓÚ75ĞĞ£¬ÓÃÓÚ±£´æÖĞ¶ÏÆÁ±Î¼Ä´æÆ÷(IMREG)Öµ
+	; ä¿å­˜ä¸­æ–­å±è”½å¯„å­˜å™¨(IMREG)å€¼
+	in	al, 21h		;ä»21hç«¯å£è·å–ä¸­æ–­å±è”½å¯„å­˜å™¨(IMREG)å€¼
+	mov	[_SavedIMREG], al	;_SavedIMREGå®šä¹‰äº75è¡Œï¼Œç”¨äºä¿å­˜ä¸­æ–­å±è”½å¯„å­˜å™¨(IMREG)å€¼
 
-	; ¼ÓÔØ GDTR
+	; åŠ è½½ GDTR
 	lgdt	[GdtPtr]
 
-	; ¹ØÖĞ¶Ï
+	; å…³ä¸­æ–­
 	;cli
 
-	; ¼ÓÔØ IDTR
+	; åŠ è½½ IDTR
 	lidt	[IdtPtr]
 
-	; ´ò¿ªµØÖ·ÏßA20
+	; æ‰“å¼€åœ°å€çº¿A20
 	in	al, 92h
 	or	al, 00000010b
 	out	92h, al
 
-	; ×¼±¸ÇĞ»»µ½±£»¤Ä£Ê½
+	; å‡†å¤‡åˆ‡æ¢åˆ°ä¿æŠ¤æ¨¡å¼
 	mov	eax, cr0
 	or	eax, 1
 	mov	cr0, eax
 
-	; ÕæÕı½øÈë±£»¤Ä£Ê½
-	jmp	dword SelectorCode32:0	; Ö´ĞĞÕâÒ»¾ä»á°Ñ SelectorCode32 ×°Èë cs, ²¢Ìø×ªµ½ Code32Selector:0  ´¦
+	; çœŸæ­£è¿›å…¥ä¿æŠ¤æ¨¡å¼
+	jmp	dword SelectorCode32:0	; æ‰§è¡Œè¿™ä¸€å¥ä¼šæŠŠ SelectorCode32 è£…å…¥ cs, å¹¶è·³è½¬åˆ° Code32Selector:0  å¤„
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-LABEL_REAL_ENTRY:		; ´Ó±£»¤Ä£Ê½Ìø»Øµ½ÊµÄ£Ê½¾Íµ½ÁËÕâÀï
+LABEL_REAL_ENTRY:		; ä»ä¿æŠ¤æ¨¡å¼è·³å›åˆ°å®æ¨¡å¼å°±åˆ°äº†è¿™é‡Œ
 	mov	ax, cs
 	mov	ds, ax
 	mov	es, ax
 	mov	ss, ax
 	mov	sp, [_wSPValueInRealMode]
 
-	lidt	[_SavedIDTR]	;´Ó219ĞĞ±£´æµÄ_SavedIDTR±äÁ¿ÖĞ»Ö¸´ IDTR µÄÔ­Öµ
+	lidt	[_SavedIDTR]	;ä»219è¡Œä¿å­˜çš„_SavedIDTRå˜é‡ä¸­æ¢å¤ IDTR çš„åŸå€¼
 
 	mov	al, [_SavedIMREG]	
-	out	21h, al			;´Ó223ĞĞ±£´æµÄ_SavedIMREG±äÁ¿ÖĞ»Ö¸´ÖĞ¶ÏÆÁ±Î¼Ä´æÆ÷(IMREG)µÄÔ­Öµ
+	out	21h, al			;ä»223è¡Œä¿å­˜çš„_SavedIMREGå˜é‡ä¸­æ¢å¤ä¸­æ–­å±è”½å¯„å­˜å™¨(IMREG)çš„åŸå€¼
 
-	in	al, 92h		; ©·
-	and	al, 11111101b	; ©Ç ¹Ø±Õ A20 µØÖ·Ïß
-	out	92h, al		; ©¿
+	in	al, 92h		; â”“
+	and	al, 11111101b	; â”£ å…³é—­ A20 åœ°å€çº¿
+	out	92h, al		; â”›
 
-	sti			; ¿ªÖĞ¶Ï
+	sti			; å¼€ä¸­æ–­
 
-	mov	ax, 4c00h	; ©·
-	int	21h		; ©¿»Øµ½ DOS
+	mov	ax, 4c00h	; â”“
+	int	21h		; â”›å›åˆ° DOS
 ; END of [SECTION .s16]
 
 
-[SECTION .s32]; 32 Î»´úÂë¶Î. ÓÉÊµÄ£Ê½ÌøÈë.
+[SECTION .s32]; 32 ä½ä»£ç æ®µ. ç”±å®æ¨¡å¼è·³å…¥.
 [BITS	32]
 
 LABEL_SEG_CODE32:
 	mov	ax, SelectorData
-	mov	ds, ax			; Êı¾İ¶ÎÑ¡Ôñ×Ó
+	mov	ds, ax			; æ•°æ®æ®µé€‰æ‹©å­
 	mov	es, ax
 	mov	ax, SelectorVideo
-	mov	gs, ax			; ÊÓÆµ¶Î(ÆÁÄ»»º³åÇø)Ñ¡Ôñ×Ó
+	mov	gs, ax			; è§†é¢‘æ®µ(å±å¹•ç¼“å†²åŒº)é€‰æ‹©å­
 
 	mov	ax, SelectorStack
-	mov	ss, ax			; ¶ÑÕ»¶ÎÑ¡Ôñ×Ó
+	mov	ss, ax			; å †æ ˆæ®µé€‰æ‹©å­
 	mov	esp, TopOfStack
 
-	call	Init8259A		;µ÷ÓÃ311ĞĞInit8259A,³õÊ¼»¯8259A£¬Ğ´ÈëICW1,2,3,4ºÍOCW1£¬½ö½ÓÊÜÊ±ÖÓÖĞ¶Ï
+	call	Init8259A		;è°ƒç”¨311è¡ŒInit8259A,åˆå§‹åŒ–8259Aï¼Œå†™å…¥ICW1,2,3,4å’ŒOCW1ï¼Œä»…æ¥å—æ—¶é’Ÿä¸­æ–­
 
-	int	080h	;²úÉú80ºÅÖĞ¶Ï£¬ÓÒÉÏ½Ç³öÏÖ×ÖÄ¸'I'
-	sti		;¿ªÖĞ¶Ï,ÉèÖÃIFÎ»(ËäÈ»ÊµÄ£Ê½ÏÂ²¢Ã»ÓĞ¹Ø±ÕÖĞ¶Ï£¬µ«ÎªÁËÈ·±£IFÒÑ¾­±»ÉèÖÃ£¬»¹ÊÇ¼ÓÉÏ´Ë¾ä±È½ÏºÃ)
-	jmp	$	;ÏİÈëËÀÑ­»·;¶¨Ê±Æ÷¶¨Ê±²úÉúÊ±ÖÓÖĞ¶Ï£¬ÓÉ319ĞĞ´úÂëÖª£¬Ê±ÖÓÖĞ¶ÏµÄÖĞ¶ÏºÅÊÇ20h£¬²éIDTÖª_ClockHandler´¦ÀíÊ±ÖÓÖĞ¶Ï£¬¸Ãº¯Êı½«ÉÏÊö×ÖÄ¸¶ÔÓ¦ÖµµİÔöÒÔÔÚÓÒÉÏ½ÇÑ­»·ÏÔÊ¾¶ÔÓ¦ASCIIÂëÖµ
-	;¸Ãº¯ÊıÖĞ´Ëºó´úÂë¾ù²»Ö´ĞĞ
-	; ÏÂÃæÏÔÊ¾Ò»¸ö×Ö·û´®
-	push	szPMMessage		;½«_szPMMessageµØÖ·ÈëÕ»,szPMMessageÔÚÊı¾İ¶ÎÖĞ¶¨Òå
-	call	DispStr		;ÏÔÊ¾"In Protect Mode now. ^-^"
-	add	esp, 4			;½«Õ»Ö¸ÕëÏÂÒÆ£¬²»Ê¹ÓÃpop¾Í½«×Ö·û´®µØÖ·Õ¼ÓÃµÄ¿Õ¼äÊÍ·Å
+	int	080h	;äº§ç”Ÿ80å·ä¸­æ–­ï¼Œå³ä¸Šè§’å‡ºç°å­—æ¯'I'
+	sti		;å¼€ä¸­æ–­,è®¾ç½®IFä½(è™½ç„¶å®æ¨¡å¼ä¸‹å¹¶æ²¡æœ‰å…³é—­ä¸­æ–­ï¼Œä½†ä¸ºäº†ç¡®ä¿IFå·²ç»è¢«è®¾ç½®ï¼Œè¿˜æ˜¯åŠ ä¸Šæ­¤å¥æ¯”è¾ƒå¥½)
+	jmp	$	;é™·å…¥æ­»å¾ªç¯;å®šæ—¶å™¨å®šæ—¶äº§ç”Ÿæ—¶é’Ÿä¸­æ–­ï¼Œç”±319è¡Œä»£ç çŸ¥ï¼Œæ—¶é’Ÿä¸­æ–­çš„ä¸­æ–­å·æ˜¯20hï¼ŒæŸ¥IDTçŸ¥_ClockHandlerå¤„ç†æ—¶é’Ÿä¸­æ–­ï¼Œè¯¥å‡½æ•°å°†ä¸Šè¿°å­—æ¯å¯¹åº”å€¼é€’å¢ä»¥åœ¨å³ä¸Šè§’å¾ªç¯æ˜¾ç¤ºå¯¹åº”ASCIIç å€¼
+	;è¯¥å‡½æ•°ä¸­æ­¤åä»£ç å‡ä¸æ‰§è¡Œ
+	; ä¸‹é¢æ˜¾ç¤ºä¸€ä¸ªå­—ç¬¦ä¸²
+	push	szPMMessage		;å°†_szPMMessageåœ°å€å…¥æ ˆ,szPMMessageåœ¨æ•°æ®æ®µä¸­å®šä¹‰
+	call	DispStr		;æ˜¾ç¤º"In Protect Mode now. ^-^"
+	add	esp, 4			;å°†æ ˆæŒ‡é’ˆä¸‹ç§»ï¼Œä¸ä½¿ç”¨popå°±å°†å­—ç¬¦ä¸²åœ°å€å ç”¨çš„ç©ºé—´é‡Šæ”¾
 
-	push	szMemChkTitle		;½«_szMemChkTitleµØÖ·ÈëÕ»,szMemChkTitleÔÚÊı¾İ¶ÎÖĞ¶¨Òå
-	call	DispStr		;ÏÔÊ¾"BaseAddrL BaseAddrH LengthLow LengthHigh   Type"
-	add	esp, 4			;½«Õ»Ö¸ÕëÏÂÒÆ£¬²»Ê¹ÓÃpop¾Í½«×Ö·û´®µØÖ·Õ¼ÓÃµÄ¿Õ¼äÊÍ·Å
+	push	szMemChkTitle		;å°†_szMemChkTitleåœ°å€å…¥æ ˆ,szMemChkTitleåœ¨æ•°æ®æ®µä¸­å®šä¹‰
+	call	DispStr		;æ˜¾ç¤º"BaseAddrL BaseAddrH LengthLow LengthHigh   Type"
+	add	esp, 4			;å°†æ ˆæŒ‡é’ˆä¸‹ç§»ï¼Œä¸ä½¿ç”¨popå°±å°†å­—ç¬¦ä¸²åœ°å€å ç”¨çš„ç©ºé—´é‡Šæ”¾
 
-	call	DispMemSize		; ÏÔÊ¾ÄÚ´æĞÅÏ¢
+	call	DispMemSize		; æ˜¾ç¤ºå†…å­˜ä¿¡æ¯
 
-	call	PagingDemo		; ÑİÊ¾¸Ä±äÒ³Ä¿Â¼µÄĞ§¹û
+	call	PagingDemo		; æ¼”ç¤ºæ”¹å˜é¡µç›®å½•çš„æ•ˆæœ
 
-	call	SetRealmode8259A	; ½«8259AÉèÖÃÎªÊµÄ£Ê½µÄ×´Ì¬
+	call	SetRealmode8259A	; å°†8259Aè®¾ç½®ä¸ºå®æ¨¡å¼çš„çŠ¶æ€
 
-	; µ½´ËÍ£Ö¹
+	; åˆ°æ­¤åœæ­¢
 	jmp	SelectorCode16:0
 
 ; Init8259A ---------------------------------------------------------------------------------------------
 Init8259A:
-	mov	al, 011h	;µÚ0Î»ÖÃ1,±íÊ¾ĞèÒªICW4,µÚ4Î»ÖÃ1,ÒòÎª¸ÃÎ»¶ÔICW1±ØĞëÎª1
-	out	020h, al	;Íù¶Ë¿Ú20(Ö÷8259)Ğ´ÈëICW1.
-	call	io_delay	;ËÄÌõ¿ÕÖ¸Áî,ÎªÑÓ³Ùº¯Êı£¬ÒÔµÈ´ı²Ù×÷Íê³É,ÔÚ379ĞĞ¶¨Òå
+	mov	al, 011h	;ç¬¬0ä½ç½®1,è¡¨ç¤ºéœ€è¦ICW4,ç¬¬4ä½ç½®1,å› ä¸ºè¯¥ä½å¯¹ICW1å¿…é¡»ä¸º1
+	out	020h, al	;å¾€ç«¯å£20(ä¸»8259)å†™å…¥ICW1.
+	call	io_delay	;å››æ¡ç©ºæŒ‡ä»¤,ä¸ºå»¶è¿Ÿå‡½æ•°ï¼Œä»¥ç­‰å¾…æ“ä½œå®Œæˆ,åœ¨379è¡Œå®šä¹‰
 
-	out	0A0h, al	;Íù¶Ë¿ÚA0(´Ó8259)Ğ´ÈëICW1.ÒâÒåÍ¬ÉÏ
+	out	0A0h, al	;å¾€ç«¯å£A0(ä»8259)å†™å…¥ICW1.æ„ä¹‰åŒä¸Š
 	call	io_delay
 
-	mov	al, 020h	;µÚ5Î»ÖÃ1£¬±íÊ¾IRQ0¶ÔÓ¦ÖĞ¶ÏÏòÁ¿ºÅ0x20
-	out	021h, al	;Íù¶Ë¿Ú21(Ö÷8259)Ğ´ÈëICW2.
+	mov	al, 020h	;ç¬¬5ä½ç½®1ï¼Œè¡¨ç¤ºIRQ0å¯¹åº”ä¸­æ–­å‘é‡å·0x20
+	out	021h, al	;å¾€ç«¯å£21(ä¸»8259)å†™å…¥ICW2.
 	call	io_delay
 
-	mov	al, 028h	;µÚ3¡¢5Î»ÖÃ1£¬±íÊ¾IRQ8¶ÔÓ¦ÖĞ¶ÏÏòÁ¿ºÅ0x28
-	out	0A1h, al	;Íù¶Ë¿ÚA1(´Ó8259)Ğ´ÈëICW2.
+	mov	al, 028h	;ç¬¬3ã€5ä½ç½®1ï¼Œè¡¨ç¤ºIRQ8å¯¹åº”ä¸­æ–­å‘é‡å·0x28
+	out	0A1h, al	;å¾€ç«¯å£A1(ä»8259)å†™å…¥ICW2.
 	call	io_delay
 
-	mov	al, 004h	;µÚ2Î»ÖÃ1£¬±íÊ¾IR2Á¬½ÓÒ»¿é´Ó8259
-	out	021h, al	;Íù¶Ë¿Ú21(Ö÷8259)Ğ´ÈëICW3.
+	mov	al, 004h	;ç¬¬2ä½ç½®1ï¼Œè¡¨ç¤ºIR2è¿æ¥ä¸€å—ä»8259
+	out	021h, al	;å¾€ç«¯å£21(ä¸»8259)å†™å…¥ICW3.
 	call	io_delay
 
-	mov	al, 002h	;µÚ1Î»ÖÃ1£¬±íÊ¾¸Ã´Ó8259Á¬½ÓÔÚÖ÷8259µÄµÄIR2ÉÏ
-	out	0A1h, al	;Íù¶Ë¿ÚA1(´Ó8259)Ğ´ÈëICW3.
+	mov	al, 002h	;ç¬¬1ä½ç½®1ï¼Œè¡¨ç¤ºè¯¥ä»8259è¿æ¥åœ¨ä¸»8259çš„çš„IR2ä¸Š
+	out	0A1h, al	;å¾€ç«¯å£A1(ä»8259)å†™å…¥ICW3.
 	call	io_delay
 
-	mov	al, 001h	;µÚ0Î»ÖÃ1£¬±íÊ¾80x86Ä£Ê½
-	out	021h, al	;Íù¶Ë¿Ú21(Ö÷8259)Ğ´ÈëICW4.
+	mov	al, 001h	;ç¬¬0ä½ç½®1ï¼Œè¡¨ç¤º80x86æ¨¡å¼
+	out	021h, al	;å¾€ç«¯å£21(ä¸»8259)å†™å…¥ICW4.
 	call	io_delay
 
-	out	0A1h, al	;Íù¶Ë¿ÚA1(´Ó8259)Ğ´ÈëICW4.ÒâÒåÍ¬ÉÏ.
+	out	0A1h, al	;å¾€ç«¯å£A1(ä»8259)å†™å…¥ICW4.æ„ä¹‰åŒä¸Š.
 	call	io_delay
 
-	mov	al, 11111110b	;µÚ0Î»ÖÃ0,½ö½ö¿ªÆôÊ±ÖÓÖĞ¶Ï(IRQ0)
-	;mov	al, 11111111b	; ÆÁ±ÎÖ÷8259ËùÓĞÖĞ¶Ï
-	out	021h, al	;Íù¶Ë¿Ú21(Ö÷8259)Ğ´ÈëOCW1.
+	mov	al, 11111110b	;ç¬¬0ä½ç½®0,ä»…ä»…å¼€å¯æ—¶é’Ÿä¸­æ–­(IRQ0)
+	;mov	al, 11111111b	; å±è”½ä¸»8259æ‰€æœ‰ä¸­æ–­
+	out	021h, al	;å¾€ç«¯å£21(ä¸»8259)å†™å…¥OCW1.
 	call	io_delay
 
-	mov	al, 11111111b	;ËùÓĞÎ»ÖÃ1,ÆÁ±Î´Ó8259ËùÓĞÖĞ¶Ï
-	out	0A1h, al	;Íù¶Ë¿ÚA1(´Ó8259)Ğ´ÈëOCW1.
+	mov	al, 11111111b	;æ‰€æœ‰ä½ç½®1,å±è”½ä»8259æ‰€æœ‰ä¸­æ–­
+	out	0A1h, al	;å¾€ç«¯å£A1(ä»8259)å†™å…¥OCW1.
 	call	io_delay
 
 	ret
 ; Init8259A ---------------------------------------------------------------------------------------------
 
 
-; ½«8259AÉèÖÃÎªÊµÄ£Ê½µÄ×´Ì¬ ---------------------------------------------------------------------------------------------
+; å°†8259Aè®¾ç½®ä¸ºå®æ¨¡å¼çš„çŠ¶æ€ ---------------------------------------------------------------------------------------------
 SetRealmode8259A:
 	mov	ax, SelectorData
-	mov	fs, ax		;Êı¾İ¶ÎÑ¡Ôñ×Ó
+	mov	fs, ax		;æ•°æ®æ®µé€‰æ‹©å­
 
-	mov	al, 017h	;µÚ4£¬2£¬1£¬0Î»ÖÃ1£¬ÓÉ¼¶Áª8259±äÎªµ¥¸ö8259£»ÓÉ8×Ö½ÚÖĞ¶ÏÏòÁ¿±äÎª4×Ö½ÚÖĞ¶ÏÏòÁ¿
-	out	020h, al	;Íù¶Ë¿Ú20(Ö÷8259)Ğ´ÈëICW1.
+	mov	al, 017h	;ç¬¬4ï¼Œ2ï¼Œ1ï¼Œ0ä½ç½®1ï¼Œç”±çº§è”8259å˜ä¸ºå•ä¸ª8259ï¼›ç”±8å­—èŠ‚ä¸­æ–­å‘é‡å˜ä¸º4å­—èŠ‚ä¸­æ–­å‘é‡
+	out	020h, al	;å¾€ç«¯å£20(ä¸»8259)å†™å…¥ICW1.
 	call	io_delay
 
-	mov	al, 008h	;IRQ0 ¶ÔÓ¦ÖĞ¶ÏÏòÁ¿ 0x8
-	out	021h, al	;Íù¶Ë¿Ú21(Ö÷8259)Ğ´ÈëICW2.
+	mov	al, 008h	;IRQ0 å¯¹åº”ä¸­æ–­å‘é‡ 0x8
+	out	021h, al	;å¾€ç«¯å£21(ä¸»8259)å†™å…¥ICW2.
 	call	io_delay
-					;ÒòÎª´ËÊ±Î»µ¥¸ö8259£¬ËùÒÔICW3ÎŞĞè¸³Öµ£¬Ëü²»»á±»ÓÃµ½
-	mov	al, 001h	;µÚ0Î»ÖÃ1£¬±íÊ¾80x86Ä£Ê½
-	out	021h, al	;Íù¶Ë¿Ú21(Ö÷8259)Ğ´ÈëICW4.
+					;å› ä¸ºæ­¤æ—¶ä½å•ä¸ª8259ï¼Œæ‰€ä»¥ICW3æ— éœ€èµ‹å€¼ï¼Œå®ƒä¸ä¼šè¢«ç”¨åˆ°
+	mov	al, 001h	;ç¬¬0ä½ç½®1ï¼Œè¡¨ç¤º80x86æ¨¡å¼
+	out	021h, al	;å¾€ç«¯å£21(ä¸»8259)å†™å…¥ICW4.
 	call	io_delay
 
 	mov	al, [fs:SavedIMREG]	
-	out	021h, al		;´Ó223ĞĞ±£´æµÄ_SavedIMREG±äÁ¿ÖĞ»Ö¸´ÖĞ¶ÏÆÁ±Î¼Ä´æÆ÷(IMREG)µÄÔ­Öµ
+	out	021h, al		;ä»223è¡Œä¿å­˜çš„_SavedIMREGå˜é‡ä¸­æ¢å¤ä¸­æ–­å±è”½å¯„å­˜å™¨(IMREG)çš„åŸå€¼
 	call	io_delay
 
 	ret
 ; SetRealmode8259A ---------------------------------------------------------------------------------------------
 
-io_delay:	;ËÄ¸öÁ¬ĞøµÄ¿ÕÓï¾ä£¬ÓÃÓÚµÈ´ıÄ³²Ù×÷Íê³É
+io_delay:	;å››ä¸ªè¿ç»­çš„ç©ºè¯­å¥ï¼Œç”¨äºç­‰å¾…æŸæ“ä½œå®Œæˆ
 	nop
 	nop
 	nop
 	nop
 	ret
 
-; ¶¨ÒåÖĞ¶Ï´¦Àíº¯Êı ---------------------------------------------------------------
-_ClockHandler:			;Í¨¹ıÊ±ÖÓ´¥·¢£¬½«ÓÒÉÏ½ÇµÄ×ÖÄ¸¶ÔÓ¦µÄÖµ+1²¢ÏÔÊ¾Öµ¶ÔÓ¦µÄASCII×Ö·û
-ClockHandler	equ	_ClockHandler - $$		;_ClockHandlerÏà¶ÔÓÚ±¾½Ú¿ªÊ¼´¦µÄÆ«ÒÆ
-	inc	byte [gs:((80 * 0 + 70) * 2)]	; Ê¹ÆÁÄ»µÚ0ĞĞ,µÚ70ÁĞµÄÖµ+1£¬ÏÔÊ¾¶ÔÓ¦µÄASCII×Ö·û
+; å®šä¹‰ä¸­æ–­å¤„ç†å‡½æ•° ---------------------------------------------------------------
+_ClockHandler:			;é€šè¿‡æ—¶é’Ÿè§¦å‘ï¼Œå°†å³ä¸Šè§’çš„å­—æ¯å¯¹åº”çš„å€¼+1å¹¶æ˜¾ç¤ºå€¼å¯¹åº”çš„ASCIIå­—ç¬¦
+ClockHandler	equ	_ClockHandler - $$		;_ClockHandlerç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+	inc	byte [gs:((80 * 0 + 70) * 2)]	; ä½¿å±å¹•ç¬¬0è¡Œ,ç¬¬70åˆ—çš„å€¼+1ï¼Œæ˜¾ç¤ºå¯¹åº”çš„ASCIIå­—ç¬¦
 	mov	al, 20h
-	out	20h, al				; Í¨¹ı·¢ËÍµÚ5Î»ÖÃ1µÄOCW2£¬Ïò8259A·¢ËÍEOI£¬ÒÔ±ã¼ÌĞø½ÓÊÕÖĞ¶Ï(±¾ÀıÖĞÎªÊ±ÖÓÖĞ¶Ï)
+	out	20h, al				; é€šè¿‡å‘é€ç¬¬5ä½ç½®1çš„OCW2ï¼Œå‘8259Aå‘é€EOIï¼Œä»¥ä¾¿ç»§ç»­æ¥æ”¶ä¸­æ–­(æœ¬ä¾‹ä¸­ä¸ºæ—¶é’Ÿä¸­æ–­)
 	iretd
 
-_UserIntHandler:		;Í¨¹ıINT 80hÒı·¢£¬ÔÚÆÁÄ»ÓÒÉÏ½ÇÏÔÊ¾'I'
-UserIntHandler	equ	_UserIntHandler - $$	;_UserIntHandlerÏà¶ÔÓÚ±¾½Ú¿ªÊ¼´¦µÄÆ«ÒÆ
-	mov	ah, 0Ch				; 0000: ºÚµ×    1100: ºì×Ö
+_UserIntHandler:		;é€šè¿‡INT 80hå¼•å‘ï¼Œåœ¨å±å¹•å³ä¸Šè§’æ˜¾ç¤º'I'
+UserIntHandler	equ	_UserIntHandler - $$	;_UserIntHandlerç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+	mov	ah, 0Ch				; 0000: é»‘åº•    1100: çº¢å­—
 	mov	al, 'I'
-	mov	[gs:((80 * 0 + 70) * 2)], ax	;ÔÚÆÁÄ»µÚ0ĞĞ,µÚ70ÁĞÏÔÊ¾×ÖÄ¸'I'
+	mov	[gs:((80 * 0 + 70) * 2)], ax	;åœ¨å±å¹•ç¬¬0è¡Œ,ç¬¬70åˆ—æ˜¾ç¤ºå­—æ¯'I'
 	iretd
 
-_SpuriousHandler:		;´Ë³ÌĞòÖĞÃ»ÓĞ³öÏÖ¸ÃÖĞ¶Ï´¦Àí³ÌĞòÄÜ¹»´¦ÀíµÄÖĞ¶Ï
-SpuriousHandler	equ	_SpuriousHandler - $$	;_SpuriousHandlerÏà¶ÔÓÚ±¾½Ú¿ªÊ¼´¦µÄÆ«ÒÆ
-	mov	ah, 0Ch				; 0000: ºÚµ×    1100: ºì×Ö
+_SpuriousHandler:		;æ­¤ç¨‹åºä¸­æ²¡æœ‰å‡ºç°è¯¥ä¸­æ–­å¤„ç†ç¨‹åºèƒ½å¤Ÿå¤„ç†çš„ä¸­æ–­
+SpuriousHandler	equ	_SpuriousHandler - $$	;_SpuriousHandlerç›¸å¯¹äºæœ¬èŠ‚å¼€å§‹å¤„çš„åç§»
+	mov	ah, 0Ch				; 0000: é»‘åº•    1100: çº¢å­—
 	mov	al, '!'
-	mov	[gs:((80 * 0 + 75) * 2)], ax	; ÔÚÆÁÄ»µÚ0ĞĞµÚ75ÁĞÏÔÊ¾¸ĞÌ¾ºÅ
-	jmp	$	;ÏİÈëËÀÑ­»·
+	mov	[gs:((80 * 0 + 75) * 2)], ax	; åœ¨å±å¹•ç¬¬0è¡Œç¬¬75åˆ—æ˜¾ç¤ºæ„Ÿå¹å·
+	jmp	$	;é™·å…¥æ­»å¾ªç¯
 	iretd
 ; ---------------------------------------------------------------------------
 
-; Æô¶¯·ÖÒ³»úÖÆ --------------------------------------------------------------
+; å¯åŠ¨åˆ†é¡µæœºåˆ¶ --------------------------------------------------------------
 SetupPaging:
-	; ¸ù¾İÄÚ´æ´óĞ¡¼ÆËãÓ¦³õÊ¼»¯¶àÉÙPDEÒÔ¼°¶àÉÙÒ³±í
-	xor	edx, edx
-	mov	eax, [dwMemSize]
-	mov	ebx, 400000h	; 400000h = 4M = 4096 * 1024, Ò»¸öÒ³±í¶ÔÓ¦µÄÄÚ´æ´óĞ¡
-	div	ebx
-	mov	ecx, eax	; ´ËÊ± ecx ÎªÒ³±íµÄ¸öÊı£¬Ò²¼´ PDE Ó¦¸ÃµÄ¸öÊı
-	test	edx, edx
+	; æ ¹æ®å†…å­˜å¤§å°è®¡ç®—åº”åˆå§‹åŒ–å¤šå°‘PDEä»¥åŠå¤šå°‘é¡µè¡¨
+	xor	edx, edx	; å°†edxç½®0
+	mov	eax, [dwMemSize]; å°†åœ¨å®æ¨¡å¼ä¸‹è¯»å–çš„å†…å­˜å¤§å°èµ‹å€¼ç»™eax
+	mov	ebx, 400000h	; 400000h = 4M = 4096 * 1024, ä¸€ä¸ªé¡µè¡¨å¯¹åº”çš„å†…å­˜å¤§å°
+	div	ebx		; æ‰§è¡Œeax/ebxï¼Œå¹¶å°†å•†å­˜æ”¾åœ¨eaxä¸­ï¼Œä½™æ•°å­˜æ”¾åœ¨edxä¸­ï¼Œæ­¤æ—¶eaxä¸­çš„å€¼å³ä¸ºæ‰€éœ€è¦çš„é¡µè¡¨æ•°ï¼ˆå‡ä¸€ï¼‰
+	mov	ecx, eax	; æ­¤æ—¶ ecx ä¸ºé¡µè¡¨çš„ä¸ªæ•°ï¼Œä¹Ÿå³ PDE åº”è¯¥çš„ä¸ªæ•°
+	test	edx, edx	; æ£€æµ‹å‰é¢é™¤æ³•å¾—åˆ°çš„ä½™æ•°æ˜¯å¦ä¸º0
 	jz	.no_remainder
-	inc	ecx		; Èç¹ûÓàÊı²»Îª 0 ¾ÍĞèÔö¼ÓÒ»¸öÒ³±í
+	inc	ecx		; å¦‚æœä½™æ•°ä¸ä¸º 0 å°±éœ€å¢åŠ ä¸€ä¸ªé¡µè¡¨ï¼Œæ‰èƒ½è®°å½•ä¸‹æ‰€æœ‰çš„å†…å­˜
 .no_remainder:
-	mov	[PageTableNumber], ecx	; Ôİ´æÒ³±í¸öÊı
+	mov	[PageTableNumber], ecx	; æš‚å­˜é¡µè¡¨ä¸ªæ•°
 
-	; Îª¼ò»¯´¦Àí, ËùÓĞÏßĞÔµØÖ·¶ÔÓ¦ÏàµÈµÄÎïÀíµØÖ·. ²¢ÇÒ²»¿¼ÂÇÄÚ´æ¿Õ¶´.
+	; ä¸ºç®€åŒ–å¤„ç†, æ‰€æœ‰çº¿æ€§åœ°å€å¯¹åº”ç›¸ç­‰çš„ç‰©ç†åœ°å€. å¹¶ä¸”ä¸è€ƒè™‘å†…å­˜ç©ºæ´.
 
-	; Ê×ÏÈ³õÊ¼»¯Ò³Ä¿Â¼
-	mov	ax, SelectorFlatRW
+	; é¦–å…ˆåˆå§‹åŒ–é¡µç›®å½•
+	mov	ax, SelectorFlatRW	;è®©esæŒ‡å‘Flatæ®µï¼Œå¹¶è¿›è¡Œè¯»å†™æ“ä½œ
 	mov	es, ax
-	mov	edi, PageDirBase0	; ´Ë¶ÎÊ×µØÖ·Îª PageDirBase
-	xor	eax, eax
-	mov	eax, PageTblBase0 | PG_P  | PG_USU | PG_RWW
+	mov	edi, PageDirBase0	; æ­¤æ®µé¦–åœ°å€ä¸º PageDirBase
+	xor	eax, eax		; å°†eaxç½®0
+	mov	eax, PageTblBase0 | PG_P  | PG_USU | PG_RWW ; å‘eaxä¸­å†™å…¥é¡µç›®å½•è¡¨é¡¹çš„å±æ€§
 .1:
-	stosd
-	add	eax, 4096		; ÎªÁË¼ò»¯, ËùÓĞÒ³±íÔÚÄÚ´æÖĞÊÇÁ¬ĞøµÄ.
-	loop	.1
+	stosd				; è¯¥æŒ‡ä»¤å°†eaxä¸­çš„ä¿¡æ¯å†™å…¥es:ediæŒ‡å‘çš„å†…å­˜ï¼ŒåŒæ—¶å°†ediå¢åŠ 4ä¸ªå­—èŠ‚çš„å¤§å°ï¼Œç”±ä¸Šæ–‡å¯çŸ¥ï¼Œè¿™é‡Œçš„å†…å­˜ä¹Ÿå°±æ˜¯é¡µç›®å½•
+	add	eax, 4096		; ä¸ºäº†ç®€åŒ–, æ‰€æœ‰é¡µè¡¨åœ¨å†…å­˜ä¸­æ˜¯è¿ç»­çš„. å¢åŠ 4096åå³ä¸ºä¸‹ä¸€ä¸ªé¡µé¢çš„èµ·å§‹åœ°å€
+	loop	.1			; å¾ªç¯èµ‹å€¼ï¼Œå¼€å§‹å¾ªç¯æ—¶æ—¶ecxä¸­çš„å€¼æ­£å¥½æ˜¯é¡µè¡¨çš„ä¸ªæ•°
 
-	; ÔÙ³õÊ¼»¯ËùÓĞÒ³±í
-	mov	eax, [PageTableNumber]	; Ò³±í¸öÊı
-	mov	ebx, 1024		; Ã¿¸öÒ³±í 1024 ¸ö PTE
-	mul	ebx
-	mov	ecx, eax		; PTE¸öÊı = Ò³±í¸öÊı * 1024
-	mov	edi, PageTblBase0	; ´Ë¶ÎÊ×µØÖ·Îª PageTblBase
-	xor	eax, eax
-	mov	eax, PG_P  | PG_USU | PG_RWW
+	; å†åˆå§‹åŒ–æ‰€æœ‰é¡µè¡¨
+	mov	eax, [PageTableNumber]	; é¡µè¡¨ä¸ªæ•°
+	mov	ebx, 1024		; æ¯ä¸ªé¡µè¡¨ 1024 ä¸ª PTE
+	mul	ebx			; ç›¸ä¹˜åå¾—åˆ°PTEçš„æ€»ä¸ªæ•°
+	mov	ecx, eax		; PTEä¸ªæ•° = é¡µè¡¨ä¸ªæ•° * 1024
+	mov	edi, PageTblBase0	; æ­¤æ®µé¦–åœ°å€ä¸º PageTblBase
+	xor	eax, eax		; eaxç½®0
+	mov	eax, PG_P  | PG_USU | PG_RWW	; å‘eaxä¸­å†™å…¥PTEçš„å±æ€§
 .2:
-	stosd
-	add	eax, 4096		; Ã¿Ò»Ò³Ö¸Ïò 4K µÄ¿Õ¼ä
-	loop	.2
+	stosd				; ç±»ä¼¼å‰æ–‡ï¼Œåˆå§‹åŒ–PTEä¸­çš„ä¿¡æ¯
+	add	eax, 4096		; æ¯ä¸€é¡µæŒ‡å‘ 4K çš„ç©ºé—´
+	loop	.2			; å¾ªç¯èµ‹å€¼ï¼Œå¼€å§‹å¾ªç¯æ—¶æ—¶ecxä¸­çš„å€¼æ­£å¥½ä¸ºPTEçš„ä¸ªæ•°
 
-	mov	eax, PageDirBase0
-	mov	cr3, eax
-	mov	eax, cr0
-	or	eax, 80000000h
-	mov	cr0, eax
-	jmp	short .3
+	mov	eax, PageDirBase0	; é¡µç›®å½•çš„åŸºå€
+	mov	cr3, eax		; è®©cr3æŒ‡å‘é¡µç›®å½•çš„åŸºå€
+	mov	eax, cr0		; æŠŠcr0èµ‹å€¼ç»™eax
+	or	eax, 80000000h		; å°†æœ€é«˜ä½ç½®1.å¯¹åº”å³ä¸ºcr0çš„PGä½
+	mov	cr0, eax		; å†å°†ç»“æœèµ‹å€¼ç»™cr0ï¼Œå®Œæˆå¯¹PGä½çš„ç½®ä½
+	jmp	short .3		; è·³è½¬
 .3:
-	nop
+	nop				; ç©ºæŒ‡ä»¤ï¼Œç­‰å¾…æ“ä½œå®Œæˆ
 
-	ret
-; ·ÖÒ³»úÖÆÆô¶¯Íê±Ï ----------------------------------------------------------
+	ret				; è¿”å›
+; åˆ†é¡µæœºåˆ¶å¯åŠ¨å®Œæ¯• ----------------------------------------------------------
 
 
-; ²âÊÔ·ÖÒ³»úÖÆ --------------------------------------------------------------
+; æµ‹è¯•åˆ†é¡µæœºåˆ¶ --------------------------------------------------------------
 PagingDemo:
-	mov	ax, cs
-	mov	ds, ax
-	mov	ax, SelectorFlatRW
+	mov	ax, cs			; è®©ä»£ç æ®µå’Œæ•°æ®æ®µé‡åˆ
+	mov	ds, ax			
+	mov	ax, SelectorFlatRW	; è®©esæŒ‡å‘Flatæ®µ
 	mov	es, ax
 
-	push	LenFoo
-	push	OffsetFoo
-	push	ProcFoo
-	call	MemCpy
-	add	esp, 12
+	push	LenFoo			; å°†ProcFooå‡½æ•°é•¿åº¦å‹æ ˆ
+	push	OffsetFoo		; å°†ProcFooå‡½æ•°ç›¸å¯¹äºä»£ç æ®µçš„åç§»å‹æ ˆ
+	push	ProcFoo			; å°†ProcFooå‡½æ•°çš„åŸºå€å‹æ ˆï¼Œä»¥ä¸Šæ˜¯MemCpyå‡½æ•°æ‰€éœ€è¦çš„ä¸‰ä¸ªå‚æ•°
+	call	MemCpy			; è°ƒç”¨MemCpyå‡½æ•°ï¼Œå°†åæ–‡å®šä¹‰çš„ProcFooå‡½æ•°çš„ä»£ç å¤åˆ¶åˆ°ä»¥ProcFooä¸ºåŸºå€çš„å†…å­˜ä¸­
+	add	esp, 12			; å°†espå¢åŠ 12ï¼Œå›åˆ°ä¼ å‚å‰çš„å€¼
 
-	push	LenBar
-	push	OffsetBar
-	push	ProcBar
-	call	MemCpy
-	add	esp, 12
+	push	LenBar			; åŒä¸Šï¼Œå°†ProcBarhå‡½æ•°å¤åˆ¶åˆ°ä»¥ProcBarä¸ºåŸºå€çš„å†…å­˜å¤„
+	push	OffsetBar		;
+	push	ProcBar			;
+	call	MemCpy			;
+	add	esp, 12			;
 
-	push	LenPagingDemoAll
-	push	OffsetPagingDemoProc
-	push	ProcPagingDemo
-	call	MemCpy
-	add	esp, 12
+	push	LenPagingDemoAll	; åŒä¸Šï¼Œå°†è°ƒç”¨çº¿æ€§åœ°å€å¤„å‡½æ•°çš„å‡½æ•°PagingDemoProcå¤åˆ¶åˆ°ProcPagingDemoå¤„
+	push	OffsetPagingDemoProc	;
+	push	ProcPagingDemo		;
+	call	MemCpy			;
+	add	esp, 12			;
 
-	mov	ax, SelectorData
-	mov	ds, ax			; Êı¾İ¶ÎÑ¡Ôñ×Ó
-	mov	es, ax
+	mov	ax, SelectorData	; è®©dså’ŒesæŒ‡å‘æ•°æ®æ®µ
+	mov	ds, ax			; æ•°æ®æ®µé€‰æ‹©å­
+	mov	es, ax			;
 
-	call	SetupPaging		; Æô¶¯·ÖÒ³
+	call	SetupPaging		; å¯åŠ¨åˆ†é¡µ
 
-	call	SelectorFlatC:ProcPagingDemo
-	call	PSwitch			; ÇĞ»»Ò³Ä¿Â¼£¬¸Ä±äµØÖ·Ó³Éä¹ØÏµ
-	call	SelectorFlatC:ProcPagingDemo
+	call	SelectorFlatC:ProcPagingDemo	; ç¬¬ä¸€æ¬¡è°ƒç”¨çº¿æ€§åœ°å€å¤„çš„ä»£ç ï¼Œæ­¤æ—¶æ‰§è¡ŒProcFooå‡½æ•°
+	call	PSwitch			; åˆ‡æ¢é¡µç›®å½•ï¼Œæ”¹å˜åœ°å€æ˜ å°„å…³ç³»
+	call	SelectorFlatC:ProcPagingDemo	; ç¬¬äºŒæ¬¡è°ƒç”¨çº¿æ€§åœ°å€å¤„çš„ä»£ç ï¼Œæ­¤æ—¶æ‰§è¡ŒProcBarå‡½æ•°
 
-	ret
+	ret				; è¿”å›
 ; ---------------------------------------------------------------------------
 
 
-; ÇĞ»»Ò³±í ------------------------------------------------------------------
+; åˆ‡æ¢é¡µè¡¨ ------------------------------------------------------------------
 PSwitch:
-	; ³õÊ¼»¯Ò³Ä¿Â¼
-	mov	ax, SelectorFlatRW
-	mov	es, ax
-	mov	edi, PageDirBase1	; ´Ë¶ÎÊ×µØÖ·Îª PageDirBase
-	xor	eax, eax
-	mov	eax, PageTblBase1 | PG_P  | PG_USU | PG_RWW
-	mov	ecx, [PageTableNumber]
+	; åˆå§‹åŒ–é¡µç›®å½•
+	mov	ax, SelectorFlatRW	; æ­¤å¤„ä¸SetupPagingå‡½æ•°ä¸­çš„ä»£ç ç›¸åŒï¼Œå¯¹é¡µç›®å½•è¿›è¡Œäº†åˆå§‹åŒ–
+	mov	es, ax			;
+	mov	edi, PageDirBase1	; æ­¤æ®µé¦–åœ°å€ä¸º PageDirBase
+	xor	eax, eax		; æŠŠeaxç½®0
+	mov	eax, PageTblBase1 | PG_P  | PG_USU | PG_RWW	; 
+	mov	ecx, [PageTableNumber]	;
 .1:
-	stosd
-	add	eax, 4096		; ÎªÁË¼ò»¯, ËùÓĞÒ³±íÔÚÄÚ´æÖĞÊÇÁ¬ĞøµÄ.
-	loop	.1
+	stosd				;
+	add	eax, 4096		; ä¸ºäº†ç®€åŒ–, æ‰€æœ‰é¡µè¡¨åœ¨å†…å­˜ä¸­æ˜¯è¿ç»­çš„.
+	loop	.1			;
 
-	; ÔÙ³õÊ¼»¯ËùÓĞÒ³±í
-	mov	eax, [PageTableNumber]	; Ò³±í¸öÊı
-	mov	ebx, 1024		; Ã¿¸öÒ³±í 1024 ¸ö PTE
-	mul	ebx
-	mov	ecx, eax		; PTE¸öÊı = Ò³±í¸öÊı * 1024
-	mov	edi, PageTblBase1	; ´Ë¶ÎÊ×µØÖ·Îª PageTblBase
-	xor	eax, eax
-	mov	eax, PG_P  | PG_USU | PG_RWW
+	; æ­¤å¤„ä¸SetupPagingå‡½æ•°ä¸­çš„ä»£ç ç›¸åŒï¼Œå†åˆå§‹åŒ–äº†æ‰€æœ‰é¡µè¡¨
+	mov	eax, [PageTableNumber]	; é¡µè¡¨ä¸ªæ•°
+	mov	ebx, 1024		; æ¯ä¸ªé¡µè¡¨ 1024 ä¸ª PTE
+	mul	ebx			;
+	mov	ecx, eax		; PTEä¸ªæ•° = é¡µè¡¨ä¸ªæ•° * 1024
+	mov	edi, PageTblBase1	; æ­¤æ®µé¦–åœ°å€ä¸º PageTblBase
+	xor	eax, eax		;
+	mov	eax, PG_P  | PG_USU | PG_RWW	;
 .2:
-	stosd
-	add	eax, 4096		; Ã¿Ò»Ò³Ö¸Ïò 4K µÄ¿Õ¼ä
-	loop	.2
+	stosd				;
+	add	eax, 4096		; æ¯ä¸€é¡µæŒ‡å‘ 4K çš„ç©ºé—´
+	loop	.2			;
 
-	; ÔÚ´Ë¼ÙÉèÄÚ´æÊÇ´óÓÚ 8M µÄ
-	mov	eax, LinearAddrDemo
-	shr	eax, 22
-	mov	ebx, 4096
-	mul	ebx
-	mov	ecx, eax
-	mov	eax, LinearAddrDemo
-	shr	eax, 12
-	and	eax, 03FFh	; 1111111111b (10 bits)
-	mov	ebx, 4
-	mul	ebx
-	add	eax, ecx
-	add	eax, PageTblBase1
-	mov	dword [es:eax], ProcBar | PG_P | PG_USU | PG_RWW
+	; åœ¨æ­¤å‡è®¾å†…å­˜æ˜¯å¤§äº 8M çš„
+	mov	eax, LinearAddrDemo	; æŠŠçº¿æ€§åœ°å€èµ‹å€¼ç»™eax
+	shr	eax, 22			; å³ç§»22ä½ï¼Œç•™ä¸‹åœ°å€çš„é«˜åä½ï¼Œä»è€Œå¾—åˆ°è¯¥çº¿æ€§åœ°å€å¯¹åº”çš„é¡µç›®å½•è¡¨é¡¹çš„ç¼–å·
+	mov	ebx, 4096		; æŠŠ4096èµ‹å€¼ç»™ebx
+	mul	ebx			; ç›¸ä¹˜ï¼Œå°±å¾—åˆ°
+	mov	ecx, eax		;
+	mov	eax, LinearAddrDemo	;
+	shr	eax, 12			;
+	and	eax, 03FFh		; 1111111111b (10 bits)
+	mov	ebx, 4			;
+	mul	ebx			;
+	add	eax, ecx		;
+	add	eax, PageTblBase1	;
+	mov	dword [es:eax], ProcBar | PG_P | PG_USU | PG_RWW	;
 
-	mov	eax, PageDirBase1
-	mov	cr3, eax
-	jmp	short .3
+	mov	eax, PageDirBase1	;
+	mov	cr3, eax		;
+	jmp	short .3		;
 .3:
-	nop
+	nop				;
 
-	ret
+	ret				;
 ; ---------------------------------------------------------------------------
 
 
@@ -565,12 +565,12 @@ LenPagingDemoAll	equ	$ - PagingDemoProc
 ; foo -----------------------------------------------------------------------
 foo:
 OffsetFoo	equ	foo - $$
-	mov	ah, 0Ch				; 0000: ºÚµ×    1100: ºì×Ö
+	mov	ah, 0Ch				; 0000: é»‘åº•    1100: çº¢å­—
 	mov	al, 'F'
-	mov	[gs:((80 * 17 + 0) * 2)], ax	; ÆÁÄ»µÚ 17 ĞĞ, µÚ 0 ÁĞ¡£
+	mov	[gs:((80 * 17 + 0) * 2)], ax	; å±å¹•ç¬¬ 17 è¡Œ, ç¬¬ 0 åˆ—ã€‚
 	mov	al, 'o'
-	mov	[gs:((80 * 17 + 1) * 2)], ax	; ÆÁÄ»µÚ 17 ĞĞ, µÚ 1 ÁĞ¡£
-	mov	[gs:((80 * 17 + 2) * 2)], ax	; ÆÁÄ»µÚ 17 ĞĞ, µÚ 2 ÁĞ¡£
+	mov	[gs:((80 * 17 + 1) * 2)], ax	; å±å¹•ç¬¬ 17 è¡Œ, ç¬¬ 1 åˆ—ã€‚
+	mov	[gs:((80 * 17 + 2) * 2)], ax	; å±å¹•ç¬¬ 17 è¡Œ, ç¬¬ 2 åˆ—ã€‚
 	ret
 LenFoo	equ	$ - foo
 ; ---------------------------------------------------------------------------
@@ -579,32 +579,32 @@ LenFoo	equ	$ - foo
 ; bar -----------------------------------------------------------------------
 bar:
 OffsetBar	equ	bar - $$
-	mov	ah, 0Ch				; 0000: ºÚµ×    1100: ºì×Ö
+	mov	ah, 0Ch				; 0000: é»‘åº•    1100: çº¢å­—
 	mov	al, 'B'
-	mov	[gs:((80 * 18 + 0) * 2)], ax	; ÆÁÄ»µÚ 18 ĞĞ, µÚ 0 ÁĞ¡£
+	mov	[gs:((80 * 18 + 0) * 2)], ax	; å±å¹•ç¬¬ 18 è¡Œ, ç¬¬ 0 åˆ—ã€‚
 	mov	al, 'a'
-	mov	[gs:((80 * 18 + 1) * 2)], ax	; ÆÁÄ»µÚ 18 ĞĞ, µÚ 1 ÁĞ¡£
+	mov	[gs:((80 * 18 + 1) * 2)], ax	; å±å¹•ç¬¬ 18 è¡Œ, ç¬¬ 1 åˆ—ã€‚
 	mov	al, 'r'
-	mov	[gs:((80 * 18 + 2) * 2)], ax	; ÆÁÄ»µÚ 18 ĞĞ, µÚ 2 ÁĞ¡£
+	mov	[gs:((80 * 18 + 2) * 2)], ax	; å±å¹•ç¬¬ 18 è¡Œ, ç¬¬ 2 åˆ—ã€‚
 	ret
 LenBar	equ	$ - bar
 ; ---------------------------------------------------------------------------
 
 
-; ÏÔÊ¾ÄÚ´æĞÅÏ¢ --------------------------------------------------------------
+; æ˜¾ç¤ºå†…å­˜ä¿¡æ¯ --------------------------------------------------------------
 DispMemSize:
 	push	esi
 	push	edi
 	push	ecx
 
 	mov	esi, MemChkBuf
-	mov	ecx, [dwMCRNumber]	;for(int i=0;i<[MCRNumber];i++) // Ã¿´ÎµÃµ½Ò»¸öARDS(Address Range Descriptor Structure)½á¹¹
+	mov	ecx, [dwMCRNumber]	;for(int i=0;i<[MCRNumber];i++) // æ¯æ¬¡å¾—åˆ°ä¸€ä¸ªARDS(Address Range Descriptor Structure)ç»“æ„
 .loop:					;{
-	mov	edx, 5			;	for(int j=0;j<5;j++)	// Ã¿´ÎµÃµ½Ò»¸öARDSÖĞµÄ³ÉÔ±£¬¹²5¸ö³ÉÔ±
-	mov	edi, ARDStruct		;	{			// ÒÀ´ÎÏÔÊ¾£ºBaseAddrLow£¬BaseAddrHigh£¬LengthLow£¬LengthHigh£¬Type
+	mov	edx, 5			;	for(int j=0;j<5;j++)	// æ¯æ¬¡å¾—åˆ°ä¸€ä¸ªARDSä¸­çš„æˆå‘˜ï¼Œå…±5ä¸ªæˆå‘˜
+	mov	edi, ARDStruct		;	{			// ä¾æ¬¡æ˜¾ç¤ºï¼šBaseAddrLowï¼ŒBaseAddrHighï¼ŒLengthLowï¼ŒLengthHighï¼ŒType
 .1:					;
 	push	dword [esi]		;
-	call	DispInt			;		DispInt(MemChkBuf[j*4]); // ÏÔÊ¾Ò»¸ö³ÉÔ±
+	call	DispInt			;		DispInt(MemChkBuf[j*4]); // æ˜¾ç¤ºä¸€ä¸ªæˆå‘˜
 	pop	eax			;
 	stosd				;		ARDStruct[j*4] = MemChkBuf[j*4];
 	add	esi, 4			;
@@ -637,18 +637,18 @@ DispMemSize:
 	ret
 ; ---------------------------------------------------------------------------
 
-%include	"lib.inc"	; ¿âº¯Êı
+%include	"lib.inc"	; åº“å‡½æ•°
 
 SegCode32Len	equ	$ - LABEL_SEG_CODE32
 ; END of [SECTION .s32]
 
 
-; 16 Î»´úÂë¶Î. ÓÉ 32 Î»´úÂë¶ÎÌøÈë, Ìø³öºóµ½ÊµÄ£Ê½
+; 16 ä½ä»£ç æ®µ. ç”± 32 ä½ä»£ç æ®µè·³å…¥, è·³å‡ºååˆ°å®æ¨¡å¼
 [SECTION .s16code]
 ALIGN	32
 [BITS	16]
 LABEL_SEG_CODE16:
-	; Ìø»ØÊµÄ£Ê½:
+	; è·³å›å®æ¨¡å¼:
 	mov	ax, SelectorNormal
 	mov	ds, ax
 	mov	es, ax
@@ -661,7 +661,7 @@ LABEL_SEG_CODE16:
 	mov	cr0, eax
 
 LABEL_GO_BACK_TO_REAL:
-	jmp	0:LABEL_REAL_ENTRY	; ¶ÎµØÖ·»áÔÚ³ÌĞò¿ªÊ¼´¦±»ÉèÖÃ³ÉÕıÈ·µÄÖµ
+	jmp	0:LABEL_REAL_ENTRY	; æ®µåœ°å€ä¼šåœ¨ç¨‹åºå¼€å§‹å¤„è¢«è®¾ç½®æˆæ­£ç¡®çš„å€¼
 
 Code16Len	equ	$ - LABEL_SEG_CODE16
 
