@@ -38,7 +38,7 @@ GdtPtr		dw	GdtLen		; GDT界限
 		dd	0		; GDT基地址
 
 ; GDT 选择子
-SelectorNormal		equ	LABEL_DESC_NORMAL	- LABEL_GDT
+SelectorNormal		equ	LABEL_DESC_NORMAL	- LABEL_GDT		;初始化为描述符在GDT中的偏移
 SelectorFlatC		equ	LABEL_DESC_FLAT_C	- LABEL_GDT
 SelectorFlatRW		equ	LABEL_DESC_FLAT_RW	- LABEL_GDT
 SelectorCode32		equ	LABEL_DESC_CODE32	- LABEL_GDT
@@ -59,8 +59,8 @@ _szMemChkTitle:			db	"BaseAddrL BaseAddrH LengthLow LengthHigh   Type", 0Ah, 0	;
 _szRAMSize			db	"RAM size:", 0		;在DispMemSize(显示内存信息)中被使用,0代表字符串结尾'\0'
 _szReturn			db	0Ah, 0	;相当于一个换行符，在DispReturn中被使用
 ; 变量
-_wSPValueInRealMode		dw	0
-_dwMCRNumber:			dd	0	; Memory Check Result
+_wSPValueInRealMode		dw	0	;保存堆栈指针sp
+_dwMCRNumber:			dd	0	;记录地址范围描述符的个数
 _dwDispPos:			dd	(80 * 6 + 0) * 2	; 屏幕第 6 行, 第 0 列。用于显示下一个内容在屏幕上将要输出的位置
 _dwMemSize:			dd	0	; 用于存放机器的内存大小，便于计算所需定义的页表表项数
 _ARDStruct:			; Address Range Descriptor Structure 地址范围描述符结构，用于读取由15h号中断输出的内存信息
@@ -94,7 +94,7 @@ SavedIDTR		equ	_SavedIDTR	- $$	; _SavedIDTR变量相对于本节开始处的偏�
 SavedIMREG		equ	_SavedIMREG	- $$	; _SavedIMREG变量相对于本节开始处的偏移
 PageTableNumber		equ	_PageTableNumber- $$	; _PageTableNumber变量相对于本节开始处的偏移
 
-DataLen			equ	$ - LABEL_DATA
+DataLen			equ	$ - LABEL_DATA		;数据段长度
 ; END of [SECTION .data1]
 
 
@@ -298,11 +298,11 @@ LABEL_SEG_CODE32:
 	call	DispStr		;显示"BaseAddrL BaseAddrH LengthLow LengthHigh   Type"
 	add	esp, 4			;将栈指针下移，不使用pop就将字符串地址占用的空间释放
 
-	call	DispMemSize		; 显示内存信息
+	call	DispMemSize		; 跳转至595行，显示内存信息
 
-	call	PagingDemo		; 演示改变页目录的效果
+	call	PagingDemo		; 跳转至464行，演示改变页目录的效果
 
-	call	SetRealmode8259A	; 将8259A设置为实模式的状态
+	call	SetRealmode8259A	; 跳转至356行，将8259A设置为实模式的状态
 
 	; 到此停止
 	jmp	SelectorCode16:0	;跳转去CODE16段（650行），为返回实模式进行准备工作
@@ -471,7 +471,7 @@ PagingDemo:
 	push	OffsetFoo		; 将ProcFoo函数相对于代码段的偏移压栈
 	push	ProcFoo			; 将ProcFoo函数的基址压栈，以上是MemCpy函数所需要的三个参数
 	call	MemCpy			; 调用MemCpy函数，将后文定义的ProcFoo函数的代码复制到以ProcFoo为基址的内存中
-	add	esp, 12			; 将esp增加12，回到传参前的值
+	add	esp, 12			; 将esp增加12，esp回到传参前的值
 
 	push	LenBar			; 同上，将ProcBarh函数复制到以ProcBar为基址的内存处
 	push	OffsetBar		;
@@ -506,7 +506,7 @@ PSwitch:
 	mov	es, ax			;
 	mov	edi, PageDirBase1	; 此段首地址为 PageDirBase
 	xor	eax, eax		; 把eax置0
-	mov	eax, PageTblBase1 | PG_P  | PG_USU | PG_RWW	; 
+	mov	eax, PageTblBase1 | PG_P  | PG_USU | PG_RWW	; 向eax中写入页目录表项的属性
 	mov	ecx, [PageTableNumber]	;
 .1:
 	stosd				;
@@ -597,38 +597,38 @@ DispMemSize:
 	push	edi
 	push	ecx
 
-	mov	esi, MemChkBuf
-	mov	ecx, [dwMCRNumber]	;for(int i=0;i<[MCRNumber];i++) // 每次得到一个ARDS(Address Range Descriptor Structure)结构
-.loop:					;{
-	mov	edx, 5			;	for(int j=0;j<5;j++)	// 每次得到一个ARDS中的成员，共5个成员
-	mov	edi, ARDStruct		;	{			// 依次显示：BaseAddrLow，BaseAddrHigh，LengthLow，LengthHigh，Type
+	mov	esi, MemChkBuf		;15h号中断输出的内存信息存放地址
+	mov	ecx, [dwMCRNumber]	;需要显示的ARDS数量，该变量在156行被赋值
+.loop:					
+	mov	edx, 5			;	循环5次
+	mov	edi, ARDStruct		;将ARDStruct的地址赋给edi
 .1:					;
-	push	dword [esi]		;
-	call	DispInt			;		DispInt(MemChkBuf[j*4]); // 显示一个成员
-	pop	eax			;
-	stosd				;		ARDStruct[j*4] = MemChkBuf[j*4];
-	add	esi, 4			;
+	push	dword [esi]		;将待显示整形数入栈
+	call	DispInt			;依次显示BaseAddrLow，BaseAddrHigh，LengthLow，LengthHigh，Type
+	pop	eax			;将eax赋值为待显示整形数
+	stosd				;将eax中的待显示整型数放入ARDStruct中
+	add	esi, 4			;指向下一个整型数
 	dec	edx			;
-	cmp	edx, 0			;
-	jnz	.1			;	}
-	call	DispReturn		;	printf("\n");
-	cmp	dword [dwType], 1	;	if(Type == AddressRangeMemory) // AddressRangeMemory : 1, AddressRangeReserved : 2
-	jne	.2			;	{
+	cmp	edx, 0			;判断是否已循环5次
+	jnz	.1			;	未满5次，继续循环
+	call	DispReturn		;循环结束，输出换行符
+	cmp	dword [dwType], 1	;可用内存为1, 保留内存为2
+	jne	.2			;如果是可用内存，则进行如下操作，否则跳转至622行
 	mov	eax, [dwBaseAddrLow]	;
 	add	eax, [dwLengthLow]	;
-	cmp	eax, [dwMemSize]	;		if(BaseAddrLow + LengthLow > MemSize)
-	jb	.2			;
-	mov	[dwMemSize], eax	;			MemSize = BaseAddrLow + LengthLow;
-.2:					;	}
-	loop	.loop			;}
+	cmp	eax, [dwMemSize]	;求每段可用内存的基址与长度之和
+	jb	.2			;如果小于现有最大值，则跳转至622行
+	mov	[dwMemSize], eax	;内存大小为所有可用内存段基址与长度之和的最大值	
+.2:					;	
+	loop	.loop			;循环_dwMCRNumber次
 					;
-	call	DispReturn		;printf("\n");
+	call	DispReturn		;循环结束，输出换行符
 	push	szRAMSize		;
-	call	DispStr			;printf("RAM size:");
-	add	esp, 4			;
+	call	DispStr			;显示"RAM size:"
+	add	esp, 4			;直接更改esp，效果等于pop指令
 					;
 	push	dword [dwMemSize]	;
-	call	DispInt			;DispInt(MemSize);
+	call	DispInt			;显示内存大小
 	add	esp, 4			;
 
 	pop	ecx
@@ -661,7 +661,7 @@ LABEL_SEG_CODE16:
 	mov	cr0, eax
 
 LABEL_GO_BACK_TO_REAL:		;返回实模式，程序将跳转至LABEL_REAL_ENTRY（249行）
-	jmp	0:LABEL_REAL_ENTRY	; 段地址会在程序开始处被设置成正确的值
+	jmp	0:LABEL_REAL_ENTRY	; 段地址会在143行被设置成正确的值
 
 Code16Len	equ	$ - LABEL_SEG_CODE16
 
