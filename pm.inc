@@ -238,13 +238,13 @@ DA_386TGate	EQU	  8Fh	; 386 陷阱门类型值
 ; 其中:
 ;       SA_  : Selector Attribute
 
-SA_RPL0		EQU	0	; ┓
-SA_RPL1		EQU	1	; ┣ RPL
-SA_RPL2		EQU	2	; ┃
-SA_RPL3		EQU	3	; ┛
+SA_RPL0		EQU	0	; RPL = 0
+SA_RPL1		EQU	1	; RPL = 1
+SA_RPL2		EQU	2	; RPL = 2
+SA_RPL3		EQU	3	; RPL = 3
 
-SA_TIG		EQU	0	; ┓TI
-SA_TIL		EQU	4	; ┛
+SA_TIG		EQU	0	; TI(第2位)置0
+SA_TIL		EQU	4	; TI(第2位)置1
 ;----------------------------------------------------------------------------
 
 
